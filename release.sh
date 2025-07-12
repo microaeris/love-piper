@@ -1,3 +1,5 @@
+#!/bin/bash
+
 butler() {
     local butler_dir="/Users/aeris/Library/Application Support/itch/broth/butler/versions"
     local latest_version=$(ls -1 "$butler_dir" | sort -V | tail -n 1)

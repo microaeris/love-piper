@@ -1,30 +1,33 @@
 # Setup
 
 Download love2d from https://love2d.org/
-```
+```bash
 export PATH="$PATH:/Applications/love.app/Contents/MacOS"
 ```
 
 # Build
 
-```
+Setup love.js
+```bash
 npm i love.js
-zip -r piper.love .
-love.js piper.love build -c # `build` is the output dir
 ```
 
-# Run
+Build
+```bash
+./build.sh
+```
+
+# Local Testing
 
 Loading error in the browser: `both async and sync fetching of the wasm failed`
 Solution:
 Browsers block WASM loading when you open index.html directly using file:// — that’s why the fetch fails.
 
+```bash
+run.sh
 ```
-cd build
-python3 -m http.server 8000
-```
-Visit:
-http://localhost:8000
+
+
 
 # Deploy
 
