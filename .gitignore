@@ -1,0 +1,6 @@
+# Build directory
+./build/*
+
+# Zipped game files
+*.love
+

@@ -1,0 +1,107 @@
+---
+description: Löve2D project structure and guidelines
+globs:
+alwaysApply: true
+---
+
+# Löve2D Project Structure and Guidelines
+
+This project is a Löve2D game built with Lua. Follow these guidelines when working on the code.
+
+## Project Structure
+- main.lua: The entry point that initializes the game
+- conf.lua: Configuration settings for the Löve2D framework
+- lib/: Third-party libraries and dependencies
+- assets/: Game assets (images, audio, fonts, shaders)
+- src/: Source code organized by functionality
+
+## File Organization
+- Keep related code in dedicated modules
+- Organize entities (players, enemies, items) in src/entities/
+- Place game states/scenes in src/scenes/
+- Store utility functions in src/utils/
+- Group UI components in src/ui/
+
+## Coding Conventions
+- Use snake_case for filenames and variables (player_score.lua, local player_health)
+- Use PascalCase for "classes" (Player, Enemy)
+- Prefix private functions with underscore (_calculateDamage)
+- Organize "classes" with metatables and proper OOP structure
+- Document functions with comments explaining parameters and return values
+- Return the module table at the end of each module file
+
+## Lua Best Practices
+- Use local variables whenever possible for better performance
+- Cache frequently used functions in locals (local sin = math.sin)
+- Minimize table creation inside loops to reduce garbage collection
+- Avoid string concatenation in performance-critical code
+- Use table.insert() instead of t[#t+1] = value for clarity
+- Reuse tables rather than creating new ones frequently
+- Prefer ipairs() for sequential arrays and pairs() for associative tables
+- Use the module pattern: local Module = {}; return Module at the end
+
+## Löve2D Best Practices
+- Use love.load() for initialization
+- Handle game state in love.update(dt)
+- Keep drawing code in love.draw()
+- Separate logic and rendering
+- Use love.keypressed/love.keyreleased for input handling
+- Batch similar draw operations for performance
+- Load assets once at startup, not during gameplay
+- Use love.graphics.push() and love.graphics.pop() to manage transformations
+- Consider using a state management library like hump.gamestate
+- Implement a consistent update/draw pattern across all game objects
+
+## Performance Considerations
+- Reuse tables rather than creating new ones frequently
+- Be mindful of garbage collection
+- Use spritebatches for drawing multiple instances of the same image
+- Consider using shaders for special effects rather than runtime calculations
+- Profile your game regularly to identify bottlenecks
+- Implement incremental garbage collection to avoid frame rate hitches
+- Minimize the number of love.graphics state changes
+- Use love.graphics.setColor once before drawing multiple objects of the same color
+- Consider object pooling for frequently created/destroyed objects
+
+## Memory Management
+- Monitor memory usage during development
+- Implement object pooling for frequently created/destroyed objects
+- Be careful with closures that capture large environments
+- Avoid creating large temporary tables in frequently called functions
+- Consider implementing a custom allocation tracking system for debugging
+- Set collectgarbage parameters appropriately for real-time performance
+
+## Game Architecture
+- Implement a scene/state management system
+- Use an entity-component pattern for complex game objects
+- Separate update and draw logic
+- Consider implementing a simple event system for communication between components
+- Use a model-view separation pattern for complex entities
+
+## Asset Guidelines
+- Keep image sizes as powers of 2 when possible
+- Compress audio files appropriately
+- Use a consistent art style
+- Organize assets by type and purpose
+
+## Testing
+- Test your game on multiple devices/resolutions
+- Implement debug tools to help with development
+- Consider writing unit tests for complex logic
+
+## Game Mission Statement and Goals
+
+### Game Concept
+
+### Core Gameplay Goals
+
+### Technical Goals
+
+
+### Visual Style
+
+
+### Player Experience
+
+
+### Development Priorities
