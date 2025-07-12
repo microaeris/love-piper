@@ -30,6 +30,7 @@ http://localhost:8000
 
 Install `butler` via the [Itch.io app](https://itch.io/app). The Itch.io app will automatically keep it updated.
 
+## Option 1:
 Add `butler` to your bash profile or rc.
 
 ```bash
@@ -57,4 +58,7 @@ Example:
 butler push build microaeris/love2d-piper:latest
 ```
 
-
+## Option 2:
+```bash
+./release.sh
+```
