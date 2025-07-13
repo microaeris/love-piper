@@ -5,10 +5,10 @@ local utils                    = require("src.utils")
 
 -- Constants
 local COLLISION_WIDTH_SCALE    = 0.65 -- Collision hitbox width relative to sprite width
-local COLLISION_HEIGHT_SCALE   = 0.8 -- Collision hitbox height relative to sprite height
-local WOBBLE_DEFAULT_AMPLITUDE = 30  -- Base amplitude (pixels) for wobble movement
-local WOBBLE_DEFAULT_FREQUENCY = 3   -- Wobbles per second
-local PIXEL_ALIGN_OFFSET       = 0.5 -- Offset used when rounding positions for crisp pixels
+local COLLISION_HEIGHT_SCALE   = 0.8  -- Collision hitbox height relative to sprite height
+local WOBBLE_DEFAULT_AMPLITUDE = 30   -- Base amplitude (pixels) for wobble movement
+local WOBBLE_DEFAULT_FREQUENCY = 3    -- Wobbles per second
+local PIXEL_ALIGN_OFFSET       = 0.5  -- Offset used when rounding positions for crisp pixels
 
 local Enemy                    = Entity:extend()
 
@@ -74,7 +74,7 @@ function Enemy.new(x, y, enemy_type)
     self.wobble_frequency = WOBBLE_DEFAULT_FREQUENCY
 
     -- Sprite setup (use player sprite but recolor it)
-    self.sprite           = Sprite.new('assets/images/sprites/player_sheet.png', 16, 16)
+    self.sprite           = Sprite.new('assets/images/sprites/duck_sheet.png', 16, 16)
     self.sprite:addAnimation('walk_left', '9-12,1', 0.1)
     self.sprite:addAnimation('idle', { { 1, 1 } }, 0.1)
     self.current_animation = 'walk_left'
