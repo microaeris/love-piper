@@ -23,12 +23,11 @@ end
 
 -- Check if a tile is walkable
 function utils.is_walkable(map, x, y, layer_index)
-    local layer = map.layers[layer_index or 2]  -- default to layer 2
+    local layer = map.layers[layer_index or 2] -- default to layer 2
     local tile_x = math.floor(x / map.tilewidth)
     local tile_y = math.floor(y / map.tileheight)
     local tile = layer.data[tile_y] and layer.data[tile_y][tile_x]
-    print(tile_x, tile_y, tile and tile.id)
-    return tile and tile.id ~= 0  -- or tile.gid ~= 0, depending on your map
+    return tile and tile.id ~= 0 -- or tile.gid ~= 0, depending on your map
 end
 
 -- Color utilities
@@ -42,6 +41,8 @@ utils.colors = {
     yellow = { 1, 1, 0 },
     cyan = { 0, 1, 1 },
     magenta = { 1, 0, 1 },
+    orange = { 1, 0.5, 0 },
+    purple = { 0.5, 0, 1 },
 
     -- Create a color with alpha
     withAlpha = function(color, alpha)

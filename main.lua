@@ -3,6 +3,8 @@ local sti = require "lib.Simple-Tiled-Implementation.sti"
 
 -- Import local modules
 local Player = require("src.Player")
+local Enemy = require("src.Enemy")
+local EnemySpawner = require("src.EnemySpawner")
 local Camera = require("src.Camera")
 local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
@@ -12,11 +14,15 @@ local ShaderManager = require("src.ShaderManager")
 
 -- Game configuration
 local CONFIG = {
-    base_width = 160,
-    base_height = 144,
+    game_width = 160,
+    game_height = 144,
     scale_factor = 5,
-    skip_start_menu = true, -- Set to true to skip start menu for development
-    scroll_speed = 60,      -- Pixels per second horizontal scroll speed (increased from 30)
+    skip_start_menu = true,     -- Set to true to skip start menu for development
+    scroll_speed = 60,          -- Pixels per second horizontal scroll speed (increased from 30)
+    -- Enemy spawning configuration
+    enemy_spawn_interval = 2.0, -- Seconds between enemy spawns
+    enemy_spawn_chance = 0.7,   -- Probability of spawning an enemy each interval
+    max_enemies = 8,            -- Maximum number of enemies on screen at once
 }
 
 -- Game state variables
@@ -27,6 +33,7 @@ local game = {
     soundManager = nil,
     camera = nil,
     shaderManager = nil,
+    enemySpawner = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
@@ -40,11 +47,8 @@ local function init_window()
 
     -- Create canvas for low-resolution rendering
     -- game.canvas = love.graphics.newCanvas(window_width, window_height)
-    game.canvas = love.graphics.newCanvas(CONFIG.base_width, CONFIG.base_height)
+    game.canvas = love.graphics.newCanvas(CONFIG.game_width, CONFIG.game_height)
     game.canvas:setFilter("nearest", "nearest")
-
-    CONFIG.game_width  = CONFIG.base_width
-    CONFIG.game_height = CONFIG.base_height
 
     -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
 end
@@ -81,15 +85,35 @@ local function init_game()
     end
 
     -- Create player entity
-    game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
+    game.player = Player.new(CONFIG.game_width / 2, CONFIG.game_height / 2, 16, 16)
+
+    -- Initialize enemy spawner
+    local spawner_config = {
+        enemy_spawn_interval = CONFIG.enemy_spawn_interval,
+        enemy_spawn_chance = CONFIG.enemy_spawn_chance,
+        max_enemies = CONFIG.max_enemies,
+        game_width = CONFIG.game_width,
+        game_height = CONFIG.game_height
+    }
+    game.enemySpawner = EnemySpawner.new(spawner_config)
+
+    ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    love.graphics.setShader(ripple_shader)
+
+    lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    love.graphics.setShader(lighting_shader)
 
     table.insert(game.entities, game.player)
 end
 
+
+
 -- FIXME - create an entity controller class
 local function draw_entities()
-    for _, entity in ipairs(game.entities) do
-        entity:draw()
+    for i, entity in ipairs(game.entities) do
+        if entity.active then
+            entity:draw()
+        end
     end
 end
 
@@ -102,10 +126,11 @@ end
 local function handle_collisions(dt)
     for i, entity in ipairs(game.entities) do
         if entity ~= game.player and game.player:collidesWith(entity) then
-            entity.color = utils.colors.blend(entity.color, utils.colors.red, 0.1)
-            entity.rotation = entity.rotation + dt * 2
+            -- Flash red for a short period
+            entity.color = utils.colors.red
+            entity.hit_timer = 0.05 -- seconds
+
             game.soundManager:playCollisionTone()
-            debug_helpers.log("Collision detected with entity " .. i, "DEBUG")
         end
     end
 end
@@ -124,8 +149,18 @@ end
 function love.update(dt)
     -- Only update game when playing
     if game.state == "playing" then
-        -- Update camera (constant scrolling)
-        game.camera:update(dt, map)
+        -- Update camera (constant scrolling) and get wrap information
+        local wrapped, wrap_offset = game.camera:update(dt, map)
+
+        -- If camera wrapped, shift all entities so they stay in the same logical place
+        if wrapped and wrap_offset > 0 then
+            for _, entity in ipairs(game.entities) do
+                entity.x = entity.x - wrap_offset
+                if entity.sprite_x then
+                    entity.sprite_x = entity.sprite_x - wrap_offset
+                end
+            end
+        end
 
         -- Update world
         map:update(dt)
@@ -135,8 +170,33 @@ function love.update(dt)
             game.shaderManager:update(dt)
         end
 
+        -- Update enemy spawning (pass current camera position so spawns are in world coords)
+        local cam_x, _ = game.camera:get_position()
+        game.enemySpawner:update(dt, game.entities, cam_x)
+
         update_entities(dt)
         handle_collisions(dt)
+
+        -- If player moves off-screen, reset them to their spawn position
+        do
+            local cam_x, cam_y = game.camera:get_position()
+            local screen_x = game.player.x - cam_x
+            local screen_y = game.player.y - cam_y
+
+            if screen_x < -game.player.width or screen_x > CONFIG.game_width + game.player.width or screen_y < -game.player.height or screen_y > CONFIG.game_height + game.player.height then
+                game.player:resetToSpawn()
+            end
+        end
+
+        -- Clean up inactive entities
+        game.enemySpawner:cleanupInactiveEnemies(game.entities)
+
+        -- Clean up other inactive entities
+        for i = #game.entities, 1, -1 do
+            if not game.entities[i].active and not game.entities[i].enemy_type then
+                table.remove(game.entities, i)
+            end
+        end
     end
 end
 

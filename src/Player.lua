@@ -11,7 +11,7 @@ function Player.new(x, y, width, height)
     setmetatable(self, Player)
 
     -- Player-specific properties
-    self.speed = 90
+    self.speed = 130
     self.default_color = utils.colors.blue
     self.color = self.default_color
     self.is_hidden = false
@@ -32,11 +32,20 @@ function Player.new(x, y, width, height)
     self.current_animation = 'idle'
     self.animation = self.sprite:cloneAnimation('idle')
 
+    -- Remember the original spawn so we can reset later
+    self.spawn_x, self.spawn_y = x, y
+
     -- Animation state
     self.is_moving = false
     self.facing_direction = 'down' -- Track which direction player is facing
 
     return self
+end
+
+-- Reset the player back to their original spawn location
+function Player:resetToSpawn()
+    self:setPosition(self.spawn_x, self.spawn_y)
+    self:setVelocity(0, 0)
 end
 
 -- Handle player input and return movement direction
