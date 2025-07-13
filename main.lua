@@ -23,9 +23,12 @@ local game = {
 
 -- Helpers
 local function init_window()
-	-- Calculate scaling to fit window
-	local window_width = love.graphics.getWidth()
-	local window_height = love.graphics.getHeight()
+    -- Calculate scaling to fit window
+    local window_width = love.graphics.getWidth()
+    local window_height = love.graphics.getHeight()
+
+    -- Set default filter to nearest
+    love.graphics.setDefaultFilter("nearest", "nearest")
 
     -- Create canvas for low-resolution rendering
     game.canvas = love.graphics.newCanvas(window_width, window_height)
@@ -33,7 +36,7 @@ local function init_window()
 
     -- Set window size to accommodate scaled resolution
     love.window.setMode(window_width * CONFIG.scale_factor,
-                        window_height * CONFIG.scale_factor)
+        window_height * CONFIG.scale_factor)
 end
 
 -- FIXME - create an entity controller class
@@ -72,18 +75,18 @@ end
 function love.load()
     init_window()
 
-	-- Load map file
-	map = sti("assets/maps/test_map.lua")
+    -- Load map file
+    map = sti("assets/maps/test_map.lua")
     local layer = map:addCustomLayer("Sprites", 4)
 
     -- Get player spawn position
-	local player_map_obj
-	for k, object in pairs(map.objects) do
-		if object.name == "Player" then
-			player_map_obj = object
-			break
-		end
-	end
+    local player_map_obj
+    for k, object in pairs(map.objects) do
+        if object.name == "Player" then
+            player_map_obj = object
+            break
+        end
+    end
     if not player_map_obj then
         error("Player spawn position not found in map")
     end
@@ -95,12 +98,11 @@ function love.load()
 end
 
 function love.update(dt)
-	-- Update world
-	map:update(dt)
+    -- Update world
+    map:update(dt)
 
     update_entities(dt)
     handle_collisions(dt)
-
 end
 
 function love.draw()
@@ -108,7 +110,7 @@ function love.draw()
     love.graphics.setCanvas(game.canvas)
     love.graphics.clear(game.background_color)
 
-	map:draw()
+    map:draw()
     draw_entities()
     debug_helpers.draw()
 
