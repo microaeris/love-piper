@@ -3,6 +3,7 @@ local sti = require "lib.Simple-Tiled-Implementation.sti"
 
 -- Import local modules
 local Player = require("src.Player")
+local Camera = require("src.Camera")
 local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
 local Menu = require("src.Menu")
@@ -14,6 +15,7 @@ local CONFIG = {
     base_height = 144,
     scale_factor = 5,
     skip_start_menu = true, -- Set to true to skip start menu for development
+    scroll_speed = 60,      -- Pixels per second horizontal scroll speed (increased from 30)
 }
 
 -- Game state variables
@@ -22,6 +24,7 @@ local game = {
     entities = {},
     player = nil,
     soundManager = nil,
+    camera = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
@@ -52,6 +55,9 @@ local function init_game()
     -- Init sound manager
     game.soundManager = SoundManager.new()
 
+    -- Initialize camera
+    game.camera = Camera.new(CONFIG.scroll_speed)
+
     -- Get player spawn position
     local player_map_obj
     for k, object in pairs(map.objects) do
@@ -64,18 +70,18 @@ local function init_game()
         error("Player spawn position not found in map")
     end
 
-    -- Create player entity
-    game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
+    -- Create player entity - start them at a reasonable position on screen
+    game.player = Player.new(CONFIG.game_width / 4, CONFIG.game_height / 2, 48, 48)
 
-    ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
-    love.graphics.setShader(ripple_shader)
+    -- ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    -- love.graphics.setShader(ripple_shader)
 
 
-    lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
-    love.graphics.setShader(lighting_shader)
+    -- lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    -- love.graphics.setShader(lighting_shader)
 
-    lighting_shader:send("topColor", {0.05, 0.05, 0.15})     -- blue
-    lighting_shader:send("bottomColor", {0.4, 0.2, 0.3})  
+    -- lighting_shader:send("topColor", { 0.05, 0.05, 0.15 }) -- blue
+    -- lighting_shader:send("bottomColor", { 0.4, 0.2, 0.3 })
 
 
     table.insert(game.entities, game.player)
@@ -92,7 +98,20 @@ local function update_entities(dt)
     for _, entity in ipairs(game.entities) do
         entity:update(map, dt)
 
-        if entity ~= game.player then
+        -- Keep player within screen bounds
+        if entity == game.player then
+            if entity.x < entity.width / 2 then
+                entity.x = entity.width / 2
+            elseif entity.x > CONFIG.game_width - entity.width / 2 then
+                entity.x = CONFIG.game_width - entity.width / 2
+            end
+            if entity.y < entity.height / 2 then
+                entity.y = entity.height / 2
+            elseif entity.y > CONFIG.game_height - entity.height / 2 then
+                entity.y = CONFIG.game_height - entity.height / 2
+            end
+        else
+            -- Other entities bounce off screen bounds
             if entity.x - entity.width / 2 < 0 or entity.x + entity.width / 2 > CONFIG.game_width then
                 entity.vx = -entity.vx
             end
@@ -125,6 +144,9 @@ end
 function love.update(dt)
     -- Only update game when playing
     if game.state == "playing" then
+        -- Update camera (constant scrolling)
+        game.camera:update(dt, map)
+
         -- Update world
         map:update(dt)
 
@@ -141,12 +163,16 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        map:draw()
+        -- Draw scrolling background
+        game.camera:draw_scrolling_map(map)
+
+        -- Draw entities without camera transform (they move freely on screen)
         draw_entities()
         debug_helpers.draw()
     elseif game.state == "paused" then
         -- Draw the game in the background
-        map:draw()
+        game.camera:draw_scrolling_map(map)
+
         draw_entities()
         debug_helpers.draw()
         -- Draw pause overlay
