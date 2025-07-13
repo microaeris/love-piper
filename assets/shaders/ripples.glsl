@@ -1,10 +1,12 @@
 extern number time;
-extern number delta_time;
 
-vec4 effect(vec4 color, Image tex,
-            vec2 texture_coords,
-            vec2 screen_coords)
+vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
 {
-    vec4 texturecolor = Texel(tex, texture_coords);
-    return texturecolor * color;
+    // Simple horizontal sine wave
+    float wave = sin(texCoord.y * 40.0 + time * 3.0) * 0.01;
+
+    // Distort X UV coordinate to create wave
+    vec2 uv = vec2(texCoord.x + wave, texCoord.y);
+
+    return Texel(tex, uv) * color;
 }
