@@ -19,8 +19,10 @@ function Entity:getFootTilePosition()
 end
 
 function Entity:tryMove(map, dx, dy, dt)
-    local next_x_top_left = self.x + dx * self.speed * dt
-    local next_y_top_left = self.y + dy * self.speed * dt
+    -- Treat dx and dy as *displacements* that have already incorporated speed and dt.
+    -- Calculate the prospective new top-left position.
+    local next_x_top_left = self.x + dx
+    local next_y_top_left = self.y + dy
 
     local next_x_top_right = next_x_top_left + self.width
     local next_y_top_right = next_y_top_left

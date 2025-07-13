@@ -11,7 +11,7 @@ function Player.new(x, y, width, height)
     setmetatable(self, Player)
 
     -- Player-specific properties
-    self.speed = 130
+    self.speed = 60
     self.default_color = utils.colors.blue
     self.color = self.default_color
     self.is_hidden = false
