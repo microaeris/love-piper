@@ -21,6 +21,7 @@ local CONFIG = {
     game_height = 144,
     scale_factor = 5,
     skip_start_menu = true,           -- Set to true to skip start menu for development
+    allow_debug_gameOver = true,      -- Set to true if want to press '0' to auto-gameOver
     scroll_speed = 60,                -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
     enemy_spawn_interval = 2.0,       -- Seconds between enemy spawns
@@ -30,6 +31,10 @@ local CONFIG = {
     collectible_spawn_interval = 3.0, -- Seconds between collectible spawns
     collectible_spawn_chance = 0.6,   -- Probability of spawning a collectible each interval
     max_collectibles = 12,            -- Maximum number of collectibles on screen at once
+}
+
+local globalGameState = {
+    highScore = 0
 }
 
 -- Game state variables
@@ -47,7 +52,7 @@ local game = {
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
-    state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused"
+    state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused", "gameOver"
     score = 0,
 }
 
@@ -131,6 +136,7 @@ local function init_game()
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
     love.graphics.setShader(lighting_shader)
 
+    game.entities = {}
     table.insert(game.entities, game.player)
 end
 
@@ -164,6 +170,18 @@ local function handle_collisions(dt)
                 game.soundManager:playCollisionTone()
             end
         end
+    end
+end
+
+local function transition_to_gameOver_if_needed(forceTransition)
+    if game.state ~= "playing" then return end
+
+    if (false or forceTransition) then -- TODO: Change to "if playerHealth <= 0"
+        if globalGameState.highScore <= game.score then
+            globalGameState.highScore = game.score
+        end
+        game.soundManager:stopAmbience()
+        game.state = "gameOver"
     end
 end
 
@@ -232,6 +250,8 @@ function love.update(dt)
                 table.remove(game.entities, i)
             end
         end
+
+        transition_to_gameOver_if_needed(false)
     end
 end
 
@@ -287,6 +307,8 @@ function love.draw()
         love.graphics.print("Score: " .. tostring(game.score), 10, 10)
         -- Draw pause overlay
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
+    elseif game.state == "gameOver" then
+        Menu.draw_gameOver_menu(CONFIG.game_width, CONFIG.game_height, game.score, globalGameState.highScore)
     end
 
     -- Switch back to main screen and draw the scaled canvas
@@ -296,5 +318,11 @@ function love.draw()
 end
 
 function love.keypressed(key)
+    -- DEBUG
+    if game.state == "playing" and key == "0" and CONFIG.allow_debug_gameOver then
+        transition_to_gameOver_if_needed(true)
+        return
+    end
+
     game.state = Menu.handle_input(key, game.state, init_game)
 end

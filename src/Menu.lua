@@ -34,6 +34,44 @@ function Menu.draw_pause_menu(game_width, game_height)
     love.graphics.print(instruction, (game_width - instruction_width) / 2, game_height / 2 + 10)
 end
 
+function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
+    love.graphics.setColor(1, 1, 1, 1)
+    local font = love.graphics.getFont()
+
+    -- Title
+    local title = "GAME OVER"
+    local title_width = font:getWidth(title)
+    love.graphics.print(title, (game_width - title_width) / 2, game_height / 2 - 60)
+
+    -- "Score"
+    local instruction = "SCORE"
+    if (score == highScore and score ~= 0) then
+        instruction = "NEW HIGH SCORE!!!"
+    end
+    local instruction_width = font:getWidth(instruction)
+    love.graphics.print(instruction, (game_width - instruction_width) / 2, game_height / 2 - 30)
+
+    -- Score #
+    local scoreText = tostring(score)
+    local score_width = font:getWidth(score)
+    love.graphics.print(scoreText, (game_width - score_width) / 2, game_height / 2  -15)
+
+        -- "High Score"
+    local high_score = "HIGH SCORE"
+    local high_score_width = font:getWidth(high_score)
+    love.graphics.print(high_score, (game_width - high_score_width) / 2, game_height / 2 + 10)
+
+    -- Score #
+    local high_score_num = tostring(highScore)
+    local high_score_num_width = font:getWidth(high_score_num)
+    love.graphics.print(high_score_num, (game_width - high_score_num_width) / 2, game_height / 2 + 25)
+
+
+    local pressEnter = "Press ENTER to try again"
+    local press_enter_width = font:getWidth(pressEnter)
+    love.graphics.print(pressEnter, (game_width - press_enter_width) / 2, game_height / 2 + 50)
+end
+
 -- Handle menu input and state transitions
 function Menu.handle_input(key, current_state, init_game_callback)
     if current_state == "start" then
@@ -47,6 +85,11 @@ function Menu.handle_input(key, current_state, init_game_callback)
         end
     elseif current_state == "paused" then
         if key == "escape" then
+            return "playing"
+        end
+    elseif current_state == "gameOver" then
+        if key == "return" then
+            init_game_callback()
             return "playing"
         end
     end
