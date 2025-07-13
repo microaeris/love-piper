@@ -43,6 +43,32 @@ local function draw_entities()
     end
 end
 
+local function update_entities(dt)
+    for _, entity in ipairs(game.entities) do
+        entity:update(dt)
+
+        if entity ~= game.player then
+            if entity.x - entity.width / 2 < 0 or entity.x + entity.width / 2 > CONFIG.game_width then
+                entity.vx = -entity.vx
+            end
+            if entity.y - entity.height / 2 < 0 or entity.y + entity.height / 2 > CONFIG.game_height then
+                entity.vy = -entity.vy
+            end
+        end
+    end
+end
+
+local function handle_collisions(dt)
+    for i, entity in ipairs(game.entities) do
+        if entity ~= game.player and game.player:collidesWith(entity) then
+            entity.color = utils.colors.blend(entity.color, utils.colors.red, 0.1)
+            entity.rotation = entity.rotation + dt * 2
+            debug_helpers.log("Collision detected with entity " .. i, "DEBUG")
+        end
+    end
+end
+
+-- Main game loop
 function love.load()
     init_window()
 
@@ -71,6 +97,10 @@ end
 function love.update(dt)
 	-- Update world
 	map:update(dt)
+
+    update_entities(dt)
+    handle_collisions(dt)
+
 end
 
 function love.draw()
