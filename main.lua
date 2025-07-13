@@ -256,7 +256,7 @@ function love.update(dt)
         local cam_x, _ = game.camera:get_position()
         game.enemySpawner:update(dt, game.entities, cam_x)
         -- Update collectible spawning
-        game.collectibleSpawner:update(dt, game.entities, cam_x)
+        game.collectibleSpawner:update(dt, game.entities, cam_x, map)
 
         update_entities(dt)
 
@@ -454,15 +454,30 @@ end
 function love.keypressed(key)
     -- DEBUG
     if game.state == "playing" and key == "9" and CONFIG.allow_debug_spawn_collectible then
-        local spawn_x = game.player.x + game.player.width * 2
-        local spawn_y = game.player.y
+        local desired_x = game.player.x + game.player.width * 2
+        local desired_y = game.player.y
+
+        -- Find a safe stand position near the desired spawn
+        local safe_x, safe_y = utils.findSafeStandPosition(
+            map,
+            desired_x,
+            desired_y,
+            game.player.width,
+            game.player.height,
+            game.player.foot_offset,
+            2
+        )
+
+        if not safe_x then
+            return -- Could not find a safe spot
+        end
 
         local collectible
         if math.random() < 0.5 then
             local ptype = PowerUp.getRandomType()
-            collectible = PowerUp.new(spawn_x, spawn_y, ptype)
+            collectible = PowerUp.new(safe_x, safe_y, ptype)
         else
-            collectible = Collectible.new(spawn_x, spawn_y, 1)
+            collectible = Collectible.new(safe_x, safe_y, 1)
         end
 
         table.insert(game.entities, collectible)
