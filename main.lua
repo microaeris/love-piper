@@ -6,6 +6,7 @@ local Player = require("src.Player")
 local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
 local Menu = require("src.Menu")
+local SoundManager = require("src.SoundManager")
 
 -- Game configuration
 local CONFIG = {
@@ -20,6 +21,7 @@ local game = {
     -- Game settings
     entities = {},
     player = nil,
+    soundManager = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
@@ -46,6 +48,9 @@ local function init_game()
     -- Load map file
     map = sti("assets/maps/test_map.lua")
     local layer = map:addCustomLayer("Sprites", 4)
+
+    -- Init sound manager
+    game.soundManager = SoundManager.new()
 
     -- Get player spawn position
     local player_map_obj
