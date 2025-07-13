@@ -150,4 +150,14 @@ function Enemy.getRandomType()
 end
 
 -- Return the Enemy class
+function Enemy.getTypeByName(name)
+    for _, t in ipairs(ENEMY_TYPES) do
+        if t.name == name then
+            return t
+        end
+    end
+    -- Fallback to first type if not found
+    return ENEMY_TYPES[1]
+end
+
 return Enemy

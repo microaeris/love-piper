@@ -10,11 +10,17 @@ function CollectibleSpawner.new(config)
     local self = setmetatable({}, CollectibleSpawner)
 
     -- Configuration
-    self.spawn_interval = config.collectible_spawn_interval or 4.0
-    self.spawn_chance = config.collectible_spawn_chance or 0.5
+    self.spawn_interval = config.collectible_spawn_interval or 2.0
+    self.spawn_chance = config.collectible_spawn_chance or 0.75
     self.max_collectibles = config.max_collectibles or 10
     self.game_width = config.game_width
     self.game_height = config.game_height
+
+    -- Offsets and margins
+    assert(config.spawn_margin_y, "spawn_margin_y must be provided in collectible spawner config")
+    assert(config.spawn_offset_x, "spawn_offset_x must be provided in collectible spawner config")
+    self.spawn_margin_y = config.spawn_margin_y
+    self.spawn_offset_x = config.spawn_offset_x
 
     -- State
     self.spawn_timer = 0
@@ -42,8 +48,8 @@ function CollectibleSpawner:spawnCollectible(entities, camera_x)
     if count >= self.max_collectibles then return end
 
     local cam_x = camera_x or 0
-    local spawn_x = cam_x + self.game_width + 30 -- just off-screen to the right
-    local spawn_y = math.random(20, self.game_height - 20)
+    local spawn_x = cam_x + self.game_width + self.spawn_offset_x
+    local spawn_y = math.random(self.spawn_margin_y, self.game_height - self.spawn_margin_y)
 
     local collectible = Collectible.new(spawn_x, spawn_y, 1)
     table.insert(entities, collectible)
