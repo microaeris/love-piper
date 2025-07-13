@@ -1,9 +1,14 @@
 -- Player class that extends Entity
-local Entity = require("src.Entity")
-local Sprite = require("src.Sprite")
-local utils = require("src.utils")
+local Entity              = require("src.Entity")
+local Sprite              = require("src.Sprite")
+local utils               = require("src.utils")
 
-local Player = Entity:extend()
+-- Constants
+local INVINCIBLE_DURATION = 2   -- seconds of invulnerability after a hit
+local BLINK_INTERVAL      = 0.1 -- seconds between sprite visibility toggles
+local MAX_HEALTH          = 3   -- starting health
+
+local Player              = Entity:extend()
 
 -- Constructor for creating a new player
 function Player.new(x, y, width, height)
@@ -11,14 +16,22 @@ function Player.new(x, y, width, height)
     setmetatable(self, Player)
 
     -- Player-specific properties
-    self.speed = 100
-    self.default_color = utils.colors.blue
-    self.color = self.default_color
-    self.is_hidden = false
-    self.input_enabled = true
+    self.speed               = 100
+    self.default_color       = utils.colors.blue
+    self.color               = self.default_color
+    self.is_hidden           = false
+    self.input_enabled       = true
+
+    -- Health & Invincibility
+    self.max_health          = MAX_HEALTH
+    self.health              = MAX_HEALTH
+    self.invincible          = false
+    self.invincibility_timer = 0
+    self.blink_timer         = 0
+    self.visible             = true
 
     -- Sprite setup
-    self.sprite = Sprite.new('assets/images/sprites/player_sheet.png', width, height)
+    self.sprite              = Sprite.new('assets/images/sprites/player_sheet.png', width, height)
     -- Row one is walk down,
     -- Row two is walk up,
     -- Row three is walk left,
@@ -115,6 +128,20 @@ function Player:update(map, dt)
     local dx, dy = self:handleInput()
     self:setVelocity(dx * self.speed, dy * self.speed)
 
+    -- Handle invincibility timers and blinking
+    if self.invincible then
+        self.invincibility_timer = self.invincibility_timer - dt
+        self.blink_timer = self.blink_timer - dt
+        if self.blink_timer <= 0 then
+            self.visible = not self.visible
+            self.blink_timer = BLINK_INTERVAL
+        end
+        if self.invincibility_timer <= 0 then
+            self.invincible = false
+            self.visible = true
+        end
+    end
+
     -- Call parent update method - Move the player
     if not Entity.update(self, map, dt) then
         return
@@ -129,6 +156,10 @@ end
 -- Override draw method to use sprite instead of rectangle
 function Player:draw()
     if not self.active then return end
+
+    if self.invincible and not self.visible then
+        return -- skip drawing to create blinking effect
+    end
 
     -- centre-on-pivot, then snap to pixel grid
     local sprite_x = math.floor(self.x - self.width / 2 + 0.5)
@@ -175,6 +206,18 @@ end
 
 function Player:setDefaultColor(color)
     self.default_color = color or utils.colors.blue
+end
+
+function Player:takeDamage(amount)
+    if self.invincible then return end -- already invincible, ignore
+    amount = amount or 1
+    self.health = math.max(0, self.health - amount)
+
+    -- Start invincibility phase
+    self.invincible = true
+    self.invincibility_timer = INVINCIBLE_DURATION
+    self.blink_timer = BLINK_INTERVAL
+    self.visible = false
 end
 
 -- Return the Player class
