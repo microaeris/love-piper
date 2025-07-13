@@ -54,27 +54,31 @@ end
 
 -- Constructor for creating a new entity
 function Entity.new(x, y, width, height, foot_offset)
-    local self = setmetatable({}, Entity)
+    local self            = setmetatable({}, Entity)
 
     -- Position and dimensions
-    self.x = x or 0
-    self.y = y or 0
-    self.width = width or 0
-    self.height = height or 0
+    self.x                = x or 0
+    self.y                = y or 0
+    self.width            = width or 0
+    self.height           = height or 0
 
     -- Foot position offset (distance from top to foot)
     -- This is applied to the y axis only.
-    self.foot_offset = foot_offset or 0
+    self.foot_offset      = foot_offset or 0
+
+    -- Collision box (can be narrower than visual sprite)
+    self.collision_width  = width
+    self.collision_height = height
 
     -- Velocity
-    self.vx = 0
-    self.vy = 0
+    self.vx               = 0
+    self.vy               = 0
 
     -- Additional properties
-    self.rotation = 0
-    self.scale = 1
-    self.color = { 1, 1, 1, 1 }
-    self.active = true
+    self.rotation         = 0
+    self.scale            = 1
+    self.color            = { 1, 1, 1, 1 }
+    self.active           = true
 
     return self
 end
@@ -103,10 +107,15 @@ end
 function Entity:collidesWith(other)
     if not self.active or not other.active then return false end
 
-    return self.x - self.width / 2 < other.x + other.width / 2 and
-        self.x + self.width / 2 > other.x - other.width / 2 and
-        self.y - self.height / 2 < other.y + other.height / 2 and
-        self.y + self.height / 2 > other.y - other.height / 2
+    local self_w  = self.collision_width or self.width
+    local self_h  = self.collision_height or self.height
+    local other_w = other.collision_width or other.width
+    local other_h = other.collision_height or other.height
+
+    return self.x - self_w / 2 < other.x + other_w / 2 and
+        self.x + self_w / 2 > other.x - other_w / 2 and
+        self.y - self_h / 2 < other.y + other_h / 2 and
+        self.y + self_h / 2 > other.y - other_h / 2
 end
 
 -- Set the entity's velocity

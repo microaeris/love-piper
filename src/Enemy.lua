@@ -42,26 +42,30 @@ function Enemy.new(x, y, enemy_type)
     local self = Entity.new(x, y, enemy_type.width, enemy_type.height)
     setmetatable(self, Enemy)
 
+    -- Narrow collision box so player can squeeze between spaced enemies
+    self.collision_width  = enemy_type.width * 0.65 -- slimmer
+    self.collision_height = enemy_type.height * 0.8
+
     -- Enemy-specific properties
-    self.speed = enemy_type.speed
+    self.speed            = enemy_type.speed
     -- Copy the color table so each enemy has its own instance (avoid shared reference)
-    self.color = { unpack(enemy_type.color) }
+    self.color            = { unpack(enemy_type.color) }
     -- Keep a copy of the original color so we can flash red on hit and revert later
-    self.original_color = { unpack(self.color) }
+    self.original_color   = { unpack(self.color) }
 
     -- Timer for red flash when hit
-    self.hit_timer = 0
-    self.health = enemy_type.health
-    self.behavior = enemy_type.behavior
-    self.enemy_type = enemy_type.name
+    self.hit_timer        = 0
+    self.health           = enemy_type.health
+    self.behavior         = enemy_type.behavior
+    self.enemy_type       = enemy_type.name
 
     -- Behavior-specific properties
-    self.wobble_time = 0
+    self.wobble_time      = 0
     self.wobble_amplitude = 30
     self.wobble_frequency = 3
 
     -- Sprite setup (use player sprite but recolor it)
-    self.sprite = Sprite.new('assets/images/sprites/player_sheet.png', 16, 16)
+    self.sprite           = Sprite.new('assets/images/sprites/player_sheet.png', 16, 16)
     self.sprite:addAnimation('walk_left', '9-12,1', 0.1)
     self.sprite:addAnimation('idle', { { 1, 1 } }, 0.1)
     self.current_animation = 'walk_left'
