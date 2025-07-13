@@ -7,6 +7,9 @@ local utils               = require("src.utils")
 local INVINCIBLE_DURATION = 2   -- seconds of invulnerability after a hit
 local BLINK_INTERVAL      = 0.1 -- seconds between sprite visibility toggles
 local MAX_HEALTH          = 3   -- starting health
+local DASH_SPEED          = 220 -- pixels per second dash speed
+local DASH_DURATION       = 0.15
+local DASH_COOLDOWN       = 1.0
 
 local Player              = Entity:extend()
 
@@ -20,7 +23,6 @@ function Player.new(x, y, width, height)
     self.speed               = 100
     self.default_color       = utils.colors.blue
     self.color               = self.default_color
-    self.is_hidden           = false
     self.input_enabled       = true
 
     -- Health & Invincibility
@@ -30,6 +32,12 @@ function Player.new(x, y, width, height)
     self.invincibility_timer = 0
     self.blink_timer         = 0
     self.visible             = true
+
+    -- Dash properties
+    self.dashing             = false
+    self.dash_timer          = 0
+    self.dash_cooldown_timer = 0
+    self.has_dashed          = false
 
     -- TODO(jm): Tuning point.
     -- Collision box narrower than sprite for smoother navigation
@@ -79,12 +87,7 @@ function Player:handleInput()
     if love.keyboard.isDown("up") or love.keyboard.isDown("w") then dy = dy - 1 end
     if love.keyboard.isDown("down") or love.keyboard.isDown("s") then dy = dy + 1 end
 
-    -- Handle space key for hiding
-    if love.keyboard.isDown("space") then
-        self:hide()
-    else
-        self:show()
-    end
+    -- (Hide functionality removed)
 
     -- Normalize diagonal movement
     if dx ~= 0 and dy ~= 0 then
@@ -132,7 +135,24 @@ function Player:update(map, dt)
 
     -- Handle input and set velocity
     local dx, dy = self:handleInput()
-    self:setVelocity(dx * self.speed, dy * self.speed)
+    if not self.dashing then
+        self:setVelocity(dx * self.speed, dy * self.speed)
+    end
+
+    -- Cooldown tick
+    if self.dash_cooldown_timer > 0 then
+        self.dash_cooldown_timer = self.dash_cooldown_timer - dt
+    end
+
+    -- Handle dash
+    if self.dashing then
+        self.dash_timer = self.dash_timer - dt
+        if self.dash_timer <= 0 then
+            self.dashing = false
+            self.dash_cooldown_timer = DASH_COOLDOWN
+            self:setVelocity(0, 0)
+        end
+    end
 
     -- Handle invincibility timers and blinking
     if self.invincible then
@@ -170,34 +190,58 @@ function Player:draw()
     -- centre-on-pivot, then snap to pixel grid
     local sprite_x = math.floor(self.x - self.width / 2 + 0.5)
     local sprite_y = math.floor(self.y - self.height / 2 + 0.5)
-
-    -- tint if hidden
-    if self.is_hidden then
-        love.graphics.setColor(1, 0.5, 0.5, 0.8)
-    else
-        love.graphics.setColor(1, 1, 1, 1)
-    end
+    love.graphics.setColor(1, 1, 1, 1)
 
     if self.animation then
         self.animation:draw(self.sprite.image, sprite_x, sprite_y, self.rotation)
     else
         self.sprite:drawFrame(1, 1, sprite_x, sprite_y, self.rotation)
     end
+
+    -- Dash cooldown indicator
+    self:drawDashIndicator()
+end
+
+-- Draw the dash cooldown indicator (pie circle above head)
+function Player:drawDashIndicator()
+    -- Only after player has dashed at least once and while not fully ready
+    local show_indicator = self.has_dashed and (self.dashing or self.dash_cooldown_timer > 0)
+    if not show_indicator then return end
+
+    local indicator_radius = 3
+    local progress
+    if self.dashing then
+        progress = 0
+    elseif self.dash_cooldown_timer > 0 then
+        progress = 1 - (self.dash_cooldown_timer / DASH_COOLDOWN)
+    else
+        progress = 1
+    end
+
+    local ind_x = self.x
+    local ind_y = self.y - self.height / 2 - 6
+
+    -- Background circle
+    love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
+    love.graphics.circle("fill", ind_x, ind_y, indicator_radius)
+
+    -- Filled arc for progress
+    if progress > 0 then
+        love.graphics.setColor(0, 0.8, 1, 1)
+        local start_angle = -math.pi / 2
+        local end_angle   = start_angle + 2 * math.pi * progress
+        love.graphics.arc("fill", ind_x, ind_y, indicator_radius, start_angle, end_angle)
+    end
+
+    -- Outline
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.circle("line", ind_x, ind_y, indicator_radius)
+
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Player-specific methods
-function Player:hide()
-    self.is_hidden = true
-end
-
-function Player:show()
-    self.is_hidden = false
-end
-
-function Player:toggleVisibility()
-    self.is_hidden = not self.is_hidden
-end
-
+-- Hide functionality removed
 function Player:disableInput()
     self.input_enabled = false
 end
@@ -236,6 +280,31 @@ function Player:takeDamage(amount)
 
     -- Start invincibility phase using the new helper
     self:activateInvincibility(INVINCIBLE_DURATION)
+end
+
+-- Trigger dash externally (called from love.keypressed)
+function Player:startDash()
+    if self.dashing or self.dash_cooldown_timer > 0 then return end
+
+    -- Determine dash direction based on facing_direction
+    local dir_x, dir_y = 0, 0
+    if self.facing_direction == 'left' then
+        dir_x = -1
+    elseif self.facing_direction == 'right' then
+        dir_x = 1
+    elseif self.facing_direction == 'up' then
+        dir_y = -1
+    else -- down
+        dir_y = 1
+    end
+
+    -- Fall back to no movement
+    if dir_x == 0 and dir_y == 0 then dir_y = 1 end
+
+    self:setVelocity(dir_x * DASH_SPEED, dir_y * DASH_SPEED)
+    self.dashing = true
+    self.dash_timer = DASH_DURATION
+    self.has_dashed = true
 end
 
 -- Return the Player class

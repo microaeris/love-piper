@@ -31,8 +31,6 @@ local CONFIG             = {
     collectible_spawn_interval = 0.5,     -- Seconds between collectible spawns (was 3.0)
     collectible_spawn_chance = 1.0,       -- Probability of spawning a collectible each interval (was 0.6)
     max_collectibles = 25,                -- Maximum number of collectibles on screen at once (was 12)
-    -- Power-up rarity weights (optional): higher number -> more common
-    powerup_weights = { invincibility = 5, slow_enemies = 4, gun = 3, clear_enemies = 1 },
 
     -- UI configuration
     health_text_offset_x = 40, -- Pixels from right edge when drawing health text
@@ -138,7 +136,6 @@ local function init_game()
         game_height = CONFIG.game_height,
         spawn_margin_y = math.floor(CONFIG.game_height * 0.05),
         spawn_offset_x = math.floor(CONFIG.game_width * 0.08),
-        powerup_weights = CONFIG.powerup_weights,
     }
     game.collectibleSpawner = CollectibleSpawner.new(collectible_config)
 
@@ -434,6 +431,13 @@ function love.keypressed(key)
 
         table.insert(game.entities, collectible)
         return -- Don't propagate further
+    end
+    -- Player dash
+    if game.state == "playing" and key == "space" then
+        if game.player and game.player.startDash then
+            game.player:startDash()
+        end
+        return
     end
     if game.state == "playing" and key == "0" and CONFIG.allow_debug_gameOver then
         transition_to_gameOver_if_needed(true)
