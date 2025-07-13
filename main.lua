@@ -54,7 +54,7 @@ local function init_game()
 
     -- Init sound manager
     game.soundManager = SoundManager.new()
-    game.soundManager:playMusic()
+    game.soundManager:playAmbience()
 
     -- Initialize camera
     game.camera = Camera.new(CONFIG.scroll_speed)
@@ -126,6 +126,7 @@ local function handle_collisions(dt)
         if entity ~= game.player and game.player:collidesWith(entity) then
             entity.color = utils.colors.blend(entity.color, utils.colors.red, 0.1)
             entity.rotation = entity.rotation + dt * 2
+            game.soundManager:playCollisionTone()
             debug_helpers.log("Collision detected with entity " .. i, "DEBUG")
         end
     end
