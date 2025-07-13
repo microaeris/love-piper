@@ -93,6 +93,10 @@ function love.load()
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
 
+    shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    love.graphics.setShader(shader)
+
+
 
     
 
