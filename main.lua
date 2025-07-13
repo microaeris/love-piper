@@ -140,6 +140,15 @@ function love.load()
     if CONFIG.skip_start_menu then
         init_game()
     end
+
+    if not player_map_obj then
+        error("Player spawn position not found in map")
+    end
+
+    -- Create player entity
+    game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
+
+    table.insert(game.entities, game.player)
 end
 
 function love.update(dt)

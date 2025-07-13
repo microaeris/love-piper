@@ -7,7 +7,7 @@ local Player = Entity:extend()
 
 -- Constructor for creating a new player
 function Player.new(x, y, width, height)
-    local self = Entity.new(x, y, width, height)
+    local self = Entity.new(x, y, width, height, 8) -- 8 is the foot offset
     setmetatable(self, Player)
 
     -- Player-specific properties
@@ -18,7 +18,7 @@ function Player.new(x, y, width, height)
     self.input_enabled = true
 
     -- Sprite setup
-    self.sprite = Sprite.new('assets/images/sprites/player_sheet.png', 16, 16)
+    self.sprite = Sprite.new('assets/images/sprites/player_sheet.png', width, height)
     -- Row one is walk down,
     -- Row two is walk up,
     -- Row three is walk left,
