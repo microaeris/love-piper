@@ -221,10 +221,11 @@ local function transition_to_gameOver_if_needed(forceTransition)
             globalGameState.highScore = game.score
         end
 
-        -- Stop current ambience so the jingle (if any) is clearly audible
+        -- Stop background audio to avoid overlap in future runs
+        game.soundManager:stopMusic()
         game.soundManager:stopAmbience()
 
-        -- Play high-score jingle if a new high score was set
+        -- Play high-score jingle if a new high score was set (jingle internally stops music/ambience too)
         if newHighScoreAchieved then
             game.soundManager:playHighScoreJingle()
         end

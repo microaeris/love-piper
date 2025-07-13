@@ -12,6 +12,11 @@ function SoundManager.new()
 	self.currentLoopingAmbience = nil
 	self.currentLoopingMusic = nil
 	self.currentSFX = nil
+
+	-- Pre-load frequently used SFX sources to avoid runtime loading latency
+	self._collisionToneSource = love.audio.newSource("assets/sfx/collision.mp3", "static")
+	self._collisionToneSource:setVolume(DEFAULT_SFX_VOLUME)
+
 	return self
 end
 
@@ -29,14 +34,12 @@ end
 
 -- Stop currently playing ambience (if any)
 function SoundManager:stopAmbience()
-	print("SoundManager.stopAmbience")
 	_stopSource(self.currentLoopingAmbience)
 	self.currentLoopingAmbience = nil
 end
 
 -- Play looping background music, replacing any previous looping music
 function SoundManager:playMusic()
-	print("SoundManager.playMusic")
 	-- Stop previous music to prevent overlap
 	self:stopMusic()
 
@@ -50,7 +53,6 @@ end
 
 -- Play looping ambience, replacing any previous ambience track
 function SoundManager:playAmbience()
-	print("SoundManager.playAmbience")
 	-- Stop previous ambience to prevent overlap
 	self:stopAmbience()
 
@@ -64,24 +66,19 @@ end
 
 -- Play short collision SFX
 function SoundManager:playCollisionTone()
-	print("SoundManager.playCollisionTone")
-	-- If an SFX is already playing, do not overlap
-	if self.currentSFX ~= nil and self.currentSFX:isPlaying() then return end
+	-- If another collision tone is currently playing, restart it quickly
+	if self._collisionToneSource:isPlaying() then
+		self._collisionToneSource:stop()
+	end
 
-	local tone = love.audio.newSource("assets/sfx/collision.mp3", "static")
-	tone:setVolume(DEFAULT_SFX_VOLUME)
-	tone:play()
+	self._collisionToneSource:seek(0)
+	self._collisionToneSource:play()
 
-	self.currentSFX = tone
+	self.currentSFX = self._collisionToneSource
 end
 
 -- Play celebratory high-score jingle, stopping all background loops first
 function SoundManager:playHighScoreJingle()
-	print("SoundManager.playHighScoreJingle")
-	-- Stop background music and ambience so the jingle stands out
-	self:stopMusic()
-	self:stopAmbience()
-
 	-- Stop any current SFX
 	if self.currentSFX ~= nil and self.currentSFX:isPlaying() then
 		self.currentSFX:stop()
