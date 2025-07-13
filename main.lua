@@ -187,7 +187,7 @@ local function handle_collisions(dt)
         if entity ~= game.player and game.player:collidesWith(entity) then
             if entity.collectible_type then
                 -- Collect the item and increment score
-                game.score = game.score + (entity.value or 1)
+                game.score = game.score + entity.value
 
                 -- Apply collectible-specific effects (e.g., power-ups)
                 if entity.applyEffect then

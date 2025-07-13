@@ -1,22 +1,35 @@
 -- Player class that extends Entity
-local Entity              = require("src.Entity")
-local Sprite              = require("src.Sprite")
-local utils               = require("src.utils")
+local Entity                  = require("src.Entity")
+local Sprite                  = require("src.Sprite")
+local utils                   = require("src.utils")
 
 -- Constants
-local INVINCIBLE_DURATION = 2   -- seconds of invulnerability after a hit
-local BLINK_INTERVAL      = 0.1 -- seconds between sprite visibility toggles
-local MAX_HEALTH          = 3   -- starting health
-local DASH_SPEED          = 220 -- pixels per second dash speed
-local DASH_DURATION       = 0.15
-local DASH_COOLDOWN       = 1.0
+local INVINCIBLE_DURATION     = 2   -- seconds of invulnerability after a hit
+local BLINK_INTERVAL          = 0.1 -- seconds between sprite visibility toggles
+local MAX_HEALTH              = 3   -- starting health
+local DASH_SPEED              = 220 -- pixels per second dash speed
+local DASH_DURATION           = 0.15
+local DASH_COOLDOWN           = 1.0
 
-local Player              = Entity:extend()
+local FOOT_OFFSET_RATIO       = 0.5  -- Foot position is halfway down the sprite height
+local HITBOX_SCALE            = 0.35 -- Collision hitbox is 35% of sprite dimensions
+local PIXEL_ALIGN_OFFSET      = 0.5  -- Offset for sub-pixel rounding when drawing
+
+-- Dash indicator colors
+local INDICATOR_BG_COLOR      = { 0.2, 0.2, 0.2, 0.9 }
+local INDICATOR_FILL_COLOR    = { 0, 0.8, 1, 1 }
+local INDICATOR_OUTLINE_COLOR = { 0, 0, 0, 1 }
+local DASH_INDICATOR_RADIUS   = 3 -- Radius of the dash cooldown indicator
+local DASH_INDICATOR_Y_OFFSET = 6 -- Vertical offset (in pixels) for dash indicator above sprite
+
+local Player                  = Entity:extend()
 
 -- Constructor for creating a new player
 function Player.new(x, y, width, height)
     -- TODO(jm): Tuning point.
-    local self = Entity.new(x, y, width, height, 8) -- 8 is the foot offset
+    -- Use a ratio of the sprite's height to determine the foot offset.
+    local foot_offset = height * FOOT_OFFSET_RATIO
+    local self = Entity.new(x, y, width, height, foot_offset)
     setmetatable(self, Player)
 
     -- Player-specific properties
@@ -39,10 +52,9 @@ function Player.new(x, y, width, height)
     self.dash_cooldown_timer = 0
     self.has_dashed          = false
 
-    -- TODO(jm): Tuning point.
     -- Collision box narrower than sprite for smoother navigation
-    self.collision_width     = width * 0.35  -- narrower hitbox
-    self.collision_height    = height * 0.35 -- shorter hitbox
+    self.collision_width     = width * HITBOX_SCALE  -- narrower hitbox
+    self.collision_height    = height * HITBOX_SCALE -- shorter hitbox
 
     -- Sprite setup
     self.sprite              = Sprite.new('assets/images/sprites/player_sheet.png', width, height)
@@ -188,9 +200,9 @@ function Player:draw()
     end
 
     -- centre-on-pivot, then snap to pixel grid
-    local sprite_x = math.floor(self.x - self.width / 2 + 0.5)
-    local sprite_y = math.floor(self.y - self.height / 2 + 0.5)
-    love.graphics.setColor(1, 1, 1, 1)
+    local sprite_x = math.floor(self.x - self.width / 2 + PIXEL_ALIGN_OFFSET)
+    local sprite_y = math.floor(self.y - self.height / 2 + PIXEL_ALIGN_OFFSET)
+    love.graphics.setColor(1, 1, 1, 1) -- white for sprite
 
     if self.animation then
         self.animation:draw(self.sprite.image, sprite_x, sprite_y, self.rotation)
@@ -208,7 +220,7 @@ function Player:drawDashIndicator()
     local show_indicator = self.has_dashed and (self.dashing or self.dash_cooldown_timer > 0)
     if not show_indicator then return end
 
-    local indicator_radius = 3
+    local indicator_radius = DASH_INDICATOR_RADIUS
     local progress
     if self.dashing then
         progress = 0
@@ -219,22 +231,22 @@ function Player:drawDashIndicator()
     end
 
     local ind_x = self.x
-    local ind_y = self.y - self.height / 2 - 6
+    local ind_y = self.y - self.height / 2 - DASH_INDICATOR_Y_OFFSET
 
     -- Background circle
-    love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
+    love.graphics.setColor(INDICATOR_BG_COLOR)
     love.graphics.circle("fill", ind_x, ind_y, indicator_radius)
 
     -- Filled arc for progress
     if progress > 0 then
-        love.graphics.setColor(0, 0.8, 1, 1)
+        love.graphics.setColor(INDICATOR_FILL_COLOR)
         local start_angle = -math.pi / 2
         local end_angle   = start_angle + 2 * math.pi * progress
         love.graphics.arc("fill", ind_x, ind_y, indicator_radius, start_angle, end_angle)
     end
 
     -- Outline
-    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.setColor(INDICATOR_OUTLINE_COLOR)
     love.graphics.circle("line", ind_x, ind_y, indicator_radius)
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -251,11 +263,11 @@ function Player:enableInput()
 end
 
 function Player:setSpeed(speed)
-    self.speed = speed or 60
+    self.speed = speed
 end
 
 function Player:setDefaultColor(color)
-    self.default_color = color or utils.colors.blue
+    self.default_color = color
 end
 
 -- Activate invincibility state for the given duration (in seconds)
