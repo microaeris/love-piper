@@ -2,7 +2,6 @@
 local sti = require "lib.Simple-Tiled-Implementation.sti"
 
 -- Import local modules
-local Entity = require("src.Entity")
 local Player = require("src.Player")
 local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")

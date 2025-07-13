@@ -3,10 +3,53 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "test.tmx",
     "expandedProjectPaths": [
     ],
     "fileStates": {
+        "Grass.tsx": {
+            "scaleInDock": 5.5,
+            "scaleInEditor": 1
+        },
+        "Hills.tsx": {
+            "scaleInDock": 5.5,
+            "scaleInEditor": 1
+        },
+        "Tilled.tsx": {
+            "scaleInDock": 5.5,
+            "scaleInEditor": 1
+        },
+        "Tilled_Wide.tsx": {
+            "scaleInDock": 5.5,
+            "scaleInEditor": 1
+        },
+        "Water.tsx": {
+            "scaleInDock": 5.5275,
+            "scaleInEditor": 1
+        },
+        "test.tmx": {
+            "scale": 5.777,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 82.65535745196469,
+                "y": 71.6634931625411
+            }
+        },
+        "test.tmx#Grass": {
+            "scaleInDock": 5.5
+        },
+        "test.tmx#Hills": {
+            "scaleInDock": 5.5
+        },
+        "test.tmx#Tilled": {
+            "scaleInDock": 5.5
+        },
+        "test.tmx#Tilled_Wide": {
+            "scaleInDock": 5.5
+        },
+        "test.tmx#Water": {
+            "scaleInDock": 5.5
+        }
     },
     "last.exportedFilePath": "/Users/aeris/my_docs/development/love-piper/assets/maps",
     "last.imagePath": "/Users/aeris/my_docs/development/love-piper/assets/images",
@@ -17,9 +60,21 @@
     "map.tileWidth": 8,
     "map.width": 20,
     "openFiles": [
+        "Grass.tsx",
+        "Hills.tsx",
+        "Water.tsx",
+        "Tilled.tsx",
+        "Tilled_Wide.tsx",
+        "test.tmx"
     ],
     "project": "map.tiled-project",
     "recentFiles": [
+        "Grass.tsx",
+        "Hills.tsx",
+        "Water.tsx",
+        "Tilled.tsx",
+        "Tilled_Wide.tsx",
+        "test.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
