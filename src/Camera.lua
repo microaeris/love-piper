@@ -28,15 +28,14 @@ end
 -- Draw the map with seamless looping using STI's built-in translation
 function Camera:draw_scrolling_map(map)
     -- Draw map multiple times for seamless looping
-    local map_width = map.width * map.tilewidth
+    local map_width_px = map.width * map.tilewidth
 
     -- Calculate how many map instances we need to draw
-    -- Camera translation is applied globally in love.draw, so only handle horizontal tiling here.
-    local start_offset = -math.floor(self.x / map_width) * map_width
+    local start_offset = -math.floor(self.x / map_width_px) * map_width_px
 
     for i = 0, 2 do -- Draw 3 instances to ensure screen coverage
-        local offset_x = start_offset + i * map_width - self.x
-        map:draw(offset_x, 0)
+        local offset_x = start_offset + i * map_width_px - self.x
+        map:draw(offset_x, -self.y)
     end
 end
 

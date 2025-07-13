@@ -1,4 +1,7 @@
-vec4 effect(vec4 color, Image tex, 
+extern number time;
+extern number delta_time;
+
+vec4 effect(vec4 color, Image tex,
             vec2 texture_coords,
             vec2 screen_coords)
 {

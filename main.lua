@@ -8,6 +8,7 @@ local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
 local Menu = require("src.Menu")
 local SoundManager = require("src.SoundManager")
+local ShaderManager = require("src.ShaderManager")
 
 -- Game configuration
 local CONFIG = {
@@ -25,6 +26,7 @@ local game = {
     player = nil,
     soundManager = nil,
     camera = nil,
+    shaderManager = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
@@ -59,6 +61,13 @@ local function init_game()
     -- Initialize camera
     game.camera = Camera.new(CONFIG.scroll_speed)
 
+    -- Initialize shader manager
+    game.shaderManager = ShaderManager.new()
+    game.shaderManager:loadAllShaders()
+    game.shaderManager:setActiveShader("lighting")
+    game.shaderManager:setActiveShader("ripples")
+    game.shaderManager:setActiveShader("crt")
+
     -- Get player spawn position
     local player_map_obj
     for k, object in pairs(map.objects) do
@@ -74,11 +83,19 @@ local function init_game()
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
 
+<<<<<<< HEAD
     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
     love.graphics.setShader(ripple_shader)
 
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
     love.graphics.setShader(lighting_shader)
+=======
+    --  ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    --  love.graphics.setShader(ripple_shader)
+
+    --   lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    --  love.graphics.setShader(lighting_shader)
+>>>>>>> 612ff2c (Shader manager)
 
 
 
@@ -130,6 +147,11 @@ function love.update(dt)
         -- Update world
         map:update(dt)
 
+        -- Update shader manager
+        if game.shaderManager then
+            game.shaderManager:update(dt)
+        end
+
         update_entities(dt)
         handle_collisions(dt)
     end
@@ -172,14 +194,18 @@ function love.draw()
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
     end
 
-    -- Switch back to main screen and draw the scaled canvas
+    -- Switch back to main screen and draw the scaled canvas with shader
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
 
-
-
-    -- love.graphics.print("Hello World", 0, 0)
+    -- Apply shader to the final canvas draw
+    if game.shaderManager then
+        game.shaderManager:drawWithShader(function()
+            love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
+        end)
+    else
+        love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
+    end
 end
 
 function love.keypressed(key)
