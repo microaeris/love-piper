@@ -24,9 +24,10 @@ end
 -- Check if a tile is walkable
 function utils.is_walkable(map, x, y, layer_index)
     local layer = map.layers[layer_index or 2]  -- default to layer 2
-    local tile_x = math.floor(x / map.tilewidth) + 1
-    local tile_y = math.floor(y / map.tileheight) + 1
+    local tile_x = math.floor(x / map.tilewidth)
+    local tile_y = math.floor(y / map.tileheight)
     local tile = layer.data[tile_y] and layer.data[tile_y][tile_x]
+    print(tile_x, tile_y, tile and tile.id)
     return tile and tile.id ~= 0  -- or tile.gid ~= 0, depending on your map
 end
 

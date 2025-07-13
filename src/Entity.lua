@@ -7,12 +7,42 @@ Entity.__index = Entity
 
 -- Helpers
 
-function Entity:tryMove(map, dx, dy, dt)
-    local next_x = self.x + dx * self.speed * dt
-    local next_y = self.y + dy * self.speed * dt
+-- Get the foot position (where the entity actually stands)
+function Entity:getFootPosition()
+    return self.x, self.y + self.foot_offset
+end
 
-    if utils.is_walkable(map, next_x, next_y) then
-        self:setPosition(next_x, next_y)
+-- Get the foot position as integers for tile-based collision
+function Entity:getFootTilePosition()
+    local foot_x, foot_y = self:getFootPosition()
+    return math.floor(foot_x), math.floor(foot_y)
+end
+
+function Entity:tryMove(map, dx, dy, dt)
+    local next_x_top_left = self.x + dx * self.speed * dt
+    local next_y_top_left = self.y + dy * self.speed * dt
+
+    local next_x_top_right = next_x_top_left + self.width
+    local next_y_top_right = next_y_top_left
+
+    local next_x_bottom_left = next_x_top_left
+    local next_y_bottom_left = next_y_top_left + self.height
+
+    local next_x_bottom_right = next_x_top_right
+    local next_y_bottom_right = next_y_bottom_left
+
+    -- Use foot position for collision detection
+    local next_x_top_left_foot = next_x_top_left
+    local next_y_top_left_foot = next_y_top_left + self.foot_offset
+
+    local next_x_top_right_foot = next_x_top_right
+    local next_y_top_right_foot = next_y_top_right + self.foot_offset
+
+    if utils.is_walkable(map, next_x_top_left_foot, next_y_top_left_foot) and
+        utils.is_walkable(map, next_x_top_right_foot, next_y_top_right_foot) and
+        utils.is_walkable(map, next_x_bottom_left, next_y_bottom_left) and
+        utils.is_walkable(map, next_x_bottom_right, next_y_bottom_right) then
+        self:setPosition(next_x_top_left, next_y_top_left)
         return true
     end
     return false
@@ -21,14 +51,18 @@ end
 -- Entity class
 
 -- Constructor for creating a new entity
-function Entity.new(x, y, width, height)
+function Entity.new(x, y, width, height, foot_offset)
     local self = setmetatable({}, Entity)
 
     -- Position and dimensions
     self.x = x or 0
     self.y = y or 0
-    self.width = width or 32
-    self.height = height or 32
+    self.width = width or 0
+    self.height = height or 0
+
+    -- Foot position offset (distance from top to foot)
+    -- This is applied to the y axis only.
+    self.foot_offset = foot_offset or 0
 
     -- Velocity
     self.vx = 0
@@ -81,12 +115,13 @@ end
 
 -- Set the entity's position
 function Entity:setPosition(x, y)
+    -- Entity's internal position in float precision
     self.x = x or self.x
     self.y = y or self.y
 
     -- Round to the sprite position to the nearest pixel
-    self.sprite_x = math.floor(self.x + 0.49)
-    self.sprite_y =  math.floor(self.y + 0.49)
+    self.sprite_x = math.floor(self.x + 0.5)
+    self.sprite_y =  math.floor(self.y + 0.5)
 end
 
 -- Create a derived class from Entity

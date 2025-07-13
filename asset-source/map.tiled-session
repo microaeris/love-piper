@@ -6,6 +6,11 @@
     "activeFile": "test.tmx",
     "expandedProjectPaths": [
     ],
+    "exportAsImage.drawTileGrid": false,
+    "exportAsImage.includeBackgroundColor": true,
+    "exportAsImage.useCurrentScale": true,
+    "exportAsImage.visibleLayersOnly": true,
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "Grass.tsx": {
             "scaleInDock": 5.5,
@@ -69,12 +74,12 @@
     ],
     "project": "map.tiled-project",
     "recentFiles": [
+        "test.tmx",
         "Grass.tsx",
         "Hills.tsx",
         "Water.tsx",
         "Tilled.tsx",
-        "Tilled_Wide.tsx",
-        "test.tmx"
+        "Tilled_Wide.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

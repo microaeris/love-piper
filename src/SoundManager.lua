@@ -10,10 +10,10 @@ end
 
 function SoundManager.playMusic()
 	print("SoundManager.playMusic")
-	song = love.audio.newSource("assets/music/song.ogg", "stream")
+	song = love.audio.newSource("assets/music/waterAmbience.mp3", "stream")
 	song:setLooping(true)
 	song:play()
-	song:setVolume(0)
+	song:setVolume(0.2)
 	currentMusic = song
 end
 
