@@ -60,13 +60,13 @@ local function init_game()
     game.camera = Camera.new(CONFIG.scroll_speed)
 
     -- Get player spawn position
-	local player_map_obj
-	for k, object in pairs(map.objects) do
-		if object.name == "Player" then
-			player_map_obj = object
-			break
-		end
-	end
+    local player_map_obj
+    for k, object in pairs(map.objects) do
+        if object.name == "Player" then
+            player_map_obj = object
+            break
+        end
+    end
     if not player_map_obj then
         error("Player spawn position not found in map")
     end
@@ -74,11 +74,11 @@ local function init_game()
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
 
-     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
-     love.graphics.setShader(ripple_shader)
+    ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    love.graphics.setShader(ripple_shader)
 
-      lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
-     love.graphics.setShader(lighting_shader)
+    lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    love.graphics.setShader(lighting_shader)
 
 
 
@@ -143,17 +143,30 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        -- Draw scrolling background
+        -- Draw scrolling background (map)
         game.camera:draw_scrolling_map(map)
 
-        -- Draw entities without camera transform (they move freely on screen)
+        -- Draw entities with camera transform
+        love.graphics.push()
+        local cam_x, cam_y = game.camera:get_position()
+        love.graphics.translate(-cam_x, -cam_y)
         draw_entities()
+        love.graphics.pop()
+
+        -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
     elseif game.state == "paused" then
-        -- Draw the game in the background
+        -- Draw the game world in the background
         game.camera:draw_scrolling_map(map)
 
+        -- Draw entities with camera transform
+        love.graphics.push()
+        local cam_x, cam_y = game.camera:get_position()
+        love.graphics.translate(-cam_x, -cam_y)
         draw_entities()
+        love.graphics.pop()
+
+        -- Screen-space overlays
         debug_helpers.draw()
         -- Draw pause overlay
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
@@ -164,7 +177,7 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
 
-   
+
 
     -- love.graphics.print("Hello World", 0, 0)
 end
