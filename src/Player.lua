@@ -263,11 +263,11 @@ function Player:enableInput()
 end
 
 function Player:setSpeed(speed)
-    self.speed = speed or 60
+    self.speed = speed
 end
 
 function Player:setDefaultColor(color)
-    self.default_color = color or utils.colors.blue
+    self.default_color = color
 end
 
 -- Activate invincibility state for the given duration (in seconds)

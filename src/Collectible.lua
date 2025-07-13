@@ -3,11 +3,11 @@ local Entity              = require("src.Entity")
 local utils               = require("src.utils")
 
 -- Constants ------------------------------------------------------------------------------
-local COLLECTIBLE_SIZE    = 8     -- Width and height (pixels) of the pickup hitbox
-local DEFAULT_SCORE_VALUE = 1     -- Score awarded when player picks up a basic collectible
-local BOB_SPEED           = 4     -- Speed multiplier for bobbing animation
-local BOB_AMPLITUDE       = 2     -- Pixel amplitude of bob motion
-local PIXEL_ALIGN_OFFSET  = 0.5   -- Offset for sub-pixel rounding when drawing
+local COLLECTIBLE_SIZE    = 8   -- Width and height (pixels) of the pickup hitbox
+local DEFAULT_SCORE_VALUE = 1   -- Score awarded when player picks up a basic collectible
+local BOB_SPEED           = 4   -- Speed multiplier for bobbing animation
+local BOB_AMPLITUDE       = 2   -- Pixel amplitude of bob motion
+local PIXEL_ALIGN_OFFSET  = 0.5 -- Offset for sub-pixel rounding when drawing
 
 local Collectible         = Entity:extend()
 
@@ -18,7 +18,7 @@ function Collectible.new(x, y, value)
     setmetatable(self, Collectible)
 
     -- Collectible-specific properties
-    self.value = value or DEFAULT_SCORE_VALUE
+    self.value = value
     self.collectible_type = "basic" -- tag so other systems can identify us
 
     -- Visual properties
