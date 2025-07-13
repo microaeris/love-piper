@@ -31,6 +31,9 @@ local CONFIG = {
     collectible_spawn_interval = 3.0, -- Seconds between collectible spawns
     collectible_spawn_chance = 0.6,   -- Probability of spawning a collectible each interval
     max_collectibles = 12,            -- Maximum number of collectibles on screen at once
+
+    -- UI configuration
+    health_text_offset_x = 40, -- Pixels from right edge when drawing health text
 }
 
 local globalGameState = {
@@ -134,13 +137,10 @@ local function init_game()
     }
     game.collectibleSpawner = CollectibleSpawner.new(collectible_config)
 
-    ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
-    love.graphics.setShader(ripple_shader)
-
-    lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
-    love.graphics.setShader(lighting_shader)
-
     game.entities = {}
+    table.insert(game.entities, game.player)
+    -- Reset score
+    game.score = 0
 end
 
 -- FIXME - create an entity controller class
@@ -170,7 +170,11 @@ local function handle_collisions(dt)
                 entity.color = utils.colors.red
                 entity.hit_timer = 0.05 -- seconds
 
-                game.soundManager:playCollisionTone()
+                -- Apply damage to player if not currently invincible
+                if not game.player.invincible then
+                    game.player:takeDamage(1)
+                    game.soundManager:playCollisionTone()
+                end
             end
         end
     end
@@ -179,7 +183,7 @@ end
 local function transition_to_gameOver_if_needed(forceTransition)
     if game.state ~= "playing" then return end
 
-    if (false or forceTransition) then -- TODO: Change to "if playerHealth <= 0"
+    if ((game.player and game.player.health and game.player.health <= 0) or forceTransition) then
         if globalGameState.highScore <= game.score then
             globalGameState.highScore = game.score
         end
@@ -196,7 +200,7 @@ function love.load()
         init_game()
     end
 
-    table.insert(game.entities, game.player)
+    -- player is inserted into game.entities during init_game
 end
 
 function love.update(dt)
@@ -232,11 +236,36 @@ function love.update(dt)
         update_entities(dt)
         handle_collisions(dt)
 
-        -- If player moves off-screen, reset them to their spawn position
+        -- If player moves off-screen, inflict damage (once) and respawn near center of current view.
         do
             local cam_x, cam_y = game.camera:get_position()
-            local screen_x = game.player.x - cam_x
-            local screen_y = game.player.y - cam_y
+            local screen_x     = game.player.x - cam_x
+            local screen_y     = game.player.y - cam_y
+
+            local off_horiz    = (screen_x < -game.player.width) or (screen_x > CONFIG.game_width + game.player.width)
+            local off_vert     = (screen_y < -game.player.height) or (screen_y > CONFIG.game_height + game.player.height)
+
+            if off_horiz or off_vert then
+                -- Apply damage only if not already invincible (prevents rapid double hits)
+                if not game.player.invincible then
+                    game.player:takeDamage(1)
+                end
+
+                -- Compute safe respawn position
+                local centre_x = cam_x + CONFIG.game_width / 2
+                local centre_y = cam_y + CONFIG.game_height / 2
+                local safe_x, safe_y = utils.findSafeStandPosition(
+                    map,
+                    centre_x,
+                    centre_y,
+                    game.player.width,
+                    game.player.height,
+                    game.player.foot_offset
+                )
+
+                game.player:setPosition(safe_x, safe_y)
+                game.player:setVelocity(0, 0)
+            end
         end
 
         -- Clean up inactive entities
@@ -283,6 +312,7 @@ function love.draw()
         -- Draw score
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print("Score: " .. tostring(game.score), 10, 10)
+        love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
     elseif game.state == "paused" then
         -- Draw the game world in the background with layer-specific shaders
         local map_width_px = map.width * map.tilewidth
@@ -304,6 +334,7 @@ function love.draw()
         debug_helpers.draw()
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print("Score: " .. tostring(game.score), 10, 10)
+        love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
         -- Draw pause overlay
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "gameOver" then
