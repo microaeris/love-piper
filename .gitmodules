@@ -1,0 +1,3 @@
+[submodule "lib/Simple-Tiled-Implementation"]
+	path = lib/Simple-Tiled-Implementation
+	url = git@github.com:karai17/Simple-Tiled-Implementation.git
