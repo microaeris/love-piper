@@ -5,6 +5,7 @@ local sti = require "lib.Simple-Tiled-Implementation.sti"
 local Player = require("src.Player")
 local Enemy = require("src.Enemy")
 local EnemySpawner = require("src.EnemySpawner")
+local CollectibleSpawner = require("src.CollectibleSpawner")
 local Camera = require("src.Camera")
 local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
@@ -17,12 +18,16 @@ local CONFIG = {
     game_width = 160,
     game_height = 144,
     scale_factor = 5,
-    skip_start_menu = true,     -- Set to true to skip start menu for development
-    scroll_speed = 60,          -- Pixels per second horizontal scroll speed (increased from 30)
+    skip_start_menu = true,           -- Set to true to skip start menu for development
+    scroll_speed = 60,                -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
-    enemy_spawn_interval = 2.0, -- Seconds between enemy spawns
-    enemy_spawn_chance = 0.7,   -- Probability of spawning an enemy each interval
-    max_enemies = 8,            -- Maximum number of enemies on screen at once
+    enemy_spawn_interval = 2.0,       -- Seconds between enemy spawns
+    enemy_spawn_chance = 0.7,         -- Probability of spawning an enemy each interval
+    max_enemies = 8,                  -- Maximum number of enemies on screen at once
+    -- Collectible spawning configuration
+    collectible_spawn_interval = 3.0, -- Seconds between collectible spawns
+    collectible_spawn_chance = 0.6,   -- Probability of spawning a collectible each interval
+    max_collectibles = 12,            -- Maximum number of collectibles on screen at once
 }
 
 -- Game state variables
@@ -34,10 +39,12 @@ local game = {
     camera = nil,
     shaderManager = nil,
     enemySpawner = nil,
+    collectibleSpawner = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
     state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused"
+    score = 0,
 }
 
 -- Helpers
@@ -97,6 +104,16 @@ local function init_game()
     }
     game.enemySpawner = EnemySpawner.new(spawner_config)
 
+    -- Initialize collectible spawner
+    local collectible_config = {
+        collectible_spawn_interval = CONFIG.collectible_spawn_interval,
+        collectible_spawn_chance = CONFIG.collectible_spawn_chance,
+        max_collectibles = CONFIG.max_collectibles,
+        game_width = CONFIG.game_width,
+        game_height = CONFIG.game_height
+    }
+    game.collectibleSpawner = CollectibleSpawner.new(collectible_config)
+
     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
     love.graphics.setShader(ripple_shader)
 
@@ -126,11 +143,17 @@ end
 local function handle_collisions(dt)
     for i, entity in ipairs(game.entities) do
         if entity ~= game.player and game.player:collidesWith(entity) then
-            -- Flash red for a short period
-            entity.color = utils.colors.red
-            entity.hit_timer = 0.05 -- seconds
+            if entity.collectible_type then
+                -- Collect the item and increment score
+                game.score = game.score + (entity.value or 1)
+                entity.active = false
+            else
+                -- Enemy collision feedback
+                entity.color = utils.colors.red
+                entity.hit_timer = 0.05 -- seconds
 
-            game.soundManager:playCollisionTone()
+                game.soundManager:playCollisionTone()
+            end
         end
     end
 end
@@ -173,6 +196,8 @@ function love.update(dt)
         -- Update enemy spawning (pass current camera position so spawns are in world coords)
         local cam_x, _ = game.camera:get_position()
         game.enemySpawner:update(dt, game.entities, cam_x)
+        -- Update collectible spawning
+        game.collectibleSpawner:update(dt, game.entities, cam_x)
 
         update_entities(dt)
         handle_collisions(dt)
@@ -190,6 +215,7 @@ function love.update(dt)
 
         -- Clean up inactive entities
         game.enemySpawner:cleanupInactiveEnemies(game.entities)
+        game.collectibleSpawner:cleanupInactiveCollectibles(game.entities)
 
         -- Clean up other inactive entities
         for i = #game.entities, 1, -1 do
@@ -220,6 +246,9 @@ function love.draw()
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
+        -- Draw score
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print("Score: " .. tostring(game.score), 10, 10)
     elseif game.state == "paused" then
         -- Draw the game world in the background
         game.camera:draw_scrolling_map(map)
@@ -233,6 +262,8 @@ function love.draw()
 
         -- Screen-space overlays
         debug_helpers.draw()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print("Score: " .. tostring(game.score), 10, 10)
         -- Draw pause overlay
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
     end
