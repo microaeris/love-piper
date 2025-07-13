@@ -106,7 +106,9 @@ function Player:update(map, dt)
     local dx, dy = self:handleInput()
     self:setVelocity(dx * self.speed, dy * self.speed)
 
-    -- Call parent update method
+    print (self.x, self.y)
+
+    -- Call parent update method - Move the player
     if not Entity.update(self, map, dt) then
         return
     end
@@ -161,7 +163,7 @@ function Player:enableInput()
 end
 
 function Player:setSpeed(speed)
-    self.speed = speed or 200
+    self.speed = speed or 60
 end
 
 function Player:setDefaultColor(color)
