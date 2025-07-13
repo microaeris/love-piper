@@ -16,12 +16,9 @@ function Player.new(x, y, width, height)
     self.color = self.default_color
     self.is_hidden = false
     self.input_enabled = true
-    self.config = nil -- Will be set by main.lua
-
 
     -- Sprite setup
-    -- self.sprite = Sprite.new('assets/player.png', 24, 24)
-    self.sprite = Sprite.new('assets/player.png', 48, 48)
+    self.sprite = Sprite.new('assets/images/sprites/player.png', 48, 48)
     -- Row one is walk down,
     -- Row two is walk up,
     -- Row three is walk left,

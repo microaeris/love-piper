@@ -50,17 +50,22 @@ function love.load()
 	map = sti("assets/maps/test_map.lua")
     local layer = map:addCustomLayer("Sprites", 4)
 
-    -- Get player spawn object
-	local player
+    -- Get player spawn position
+	local player_map_obj
 	for k, object in pairs(map.objects) do
 		if object.name == "Player" then
-			player = object
+			player_map_obj = object
 			break
 		end
 	end
+    if not player_map_obj then
+        error("Player spawn position not found in map")
+    end
 
+    -- Create player entity
+    game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
 
-
+    table.insert(game.entities, game.player)
 end
 
 function love.update(dt)

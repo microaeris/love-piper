@@ -9,8 +9,8 @@ return {
   height = 18,
   tilewidth = 8,
   tileheight = 8,
-  nextlayerid = 3,
-  nextobjectid = 1,
+  nextlayerid = 6,
+  nextobjectid = 2,
   properties = {},
   tilesets = {
     {
@@ -234,6 +234,35 @@ return {
         0, 0, 0, 0, 0, 0, 105, 106, 107, 108, 109, 106, 107, 108, 109, 107, 108, 109, 110, 0,
         0, 0, 0, 0, 0, 0, 127, 181, 181, 181, 181, 182, 183, 184, 128, 129, 130, 131, 132, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 4,
+      name = "Sprites",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {},
+      objects = {
+        {
+          id = 1,
+          name = "Player",
+          type = "",
+          shape = "rectangle",
+          x = 104,
+          y = 96,
+          width = 8,
+          height = 8,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        }
       }
     }
   }
