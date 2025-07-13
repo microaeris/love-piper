@@ -1,6 +1,12 @@
 local Collectible             = require("src.Collectible")
 local utils                   = require("src.utils")
 
+-- General constants ------------------------------------------------------------------------
+local SLOW_ENEMY_SPEED_MULT   = 0.25 -- Multiplier applied to enemy speed (and wobble) during slow_enemies
+local CLEAR_ENEMY_SCORE       = 2    -- Score awarded per enemy cleared by clear_enemies
+local POWERUP_DEFAULT_VALUE   = 5    -- Default score value of a power-up collectible when not specified
+local PROBABILITY_TOTAL       = 100  -- Represents 100% when working with probabilities
+
 -- PowerUp class that extends Collectible
 local PowerUp                 = Collectible:extend()
 
@@ -41,7 +47,7 @@ end
 
 -- 2. SLOW ENEMIES ---------------------------------------------------------------------------
 EFFECT_HANDLERS.slow_enemies  = function(game, pu)
-    local mul = 0.25
+    local mul = SLOW_ENEMY_SPEED_MULT
     _G.ENEMY_SPEED_MULT = mul
     for _, entity in ipairs(game.entities) do
         if entity.enemy_type then
@@ -76,7 +82,7 @@ EFFECT_HANDLERS.clear_enemies = function(game, pu)
     for _, entity in ipairs(game.entities) do
         if entity.enemy_type and entity.active then
             entity.active = false
-            game.score = game.score + 2 -- points per enemy cleared
+            game.score = game.score + CLEAR_ENEMY_SCORE -- points per enemy cleared
         end
     end
 end
@@ -89,7 +95,7 @@ end
 -- value        : score value on pickup (defaults 5)
 -- duration     : overrides default if provided
 function PowerUp.new(x, y, power_type, value, duration)
-    local self = Collectible.new(x, y, value or 5)
+    local self = Collectible.new(x, y, value or POWERUP_DEFAULT_VALUE)
     setmetatable(self, PowerUp)
 
     self.collectible_type = "powerup"
@@ -128,10 +134,11 @@ function PowerUp.getRandomType(probTable)
     end
 
     -- Enforce exact total of 100
-    assert(math.abs(total - 100) < 0.01, "Power-up probability table must sum to 100 (got " .. total .. ")")
+    assert(total == PROBABILITY_TOTAL,
+        "Power-up probability table must sum to " .. PROBABILITY_TOTAL .. " (got " .. total .. ")")
 
     -- Random selection
-    local r = math.random() * 100
+    local r = math.random() * PROBABILITY_TOTAL
     for _, entry in ipairs(cumulative) do
         if r <= entry.threshold then
             return entry.type

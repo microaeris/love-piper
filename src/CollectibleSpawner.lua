@@ -1,20 +1,27 @@
 -- CollectibleSpawner class for managing collectible spawning
-local Collectible          = require("src.Collectible")
-local PowerUp              = require("src.PowerUp")
-local debug_helpers        = require("src.debug_helpers")
+local Collectible               = require("src.Collectible")
+local PowerUp                   = require("src.PowerUp")
+local debug_helpers             = require("src.debug_helpers")
 
-local CollectibleSpawner   = {}
-CollectibleSpawner.__index = CollectibleSpawner
+-- Constants ------------------------------------------------------------------------------
+local DEFAULT_SPAWN_INTERVAL    = 0.5  -- Seconds between spawn checks
+local DEFAULT_SPAWN_CHANCE      = 1.0  -- Probability of spawning each interval
+local DEFAULT_POWERUP_CHANCE    = 0.15 -- Chance that a spawned collectible is a power-up
+local DEFAULT_MAX_COLLECTIBLES  = 25   -- Maximum number of active collectibles
+local DEFAULT_COLLECTIBLE_VALUE = 1    -- Score value for basic collectibles
+
+local CollectibleSpawner        = {}
+CollectibleSpawner.__index      = CollectibleSpawner
 
 -- Constructor for creating a new collectible spawner
 function CollectibleSpawner.new(config)
     local self            = setmetatable({}, CollectibleSpawner)
 
     -- Configuration
-    self.spawn_interval   = config.collectible_spawn_interval or 2.0
-    self.spawn_chance     = config.collectible_spawn_chance or 0.75
-    self.powerup_chance   = config.powerup_chance or 0.15 -- Chance that a spawned collectible is a power-up
-    self.max_collectibles = config.max_collectibles or 10
+    self.spawn_interval   = DEFAULT_SPAWN_INTERVAL
+    self.spawn_chance     = DEFAULT_SPAWN_CHANCE
+    self.powerup_chance   = DEFAULT_POWERUP_CHANCE
+    self.max_collectibles = DEFAULT_MAX_COLLECTIBLES
     self.game_width       = config.game_width
     self.game_height      = config.game_height
 
@@ -59,7 +66,7 @@ function CollectibleSpawner:spawnCollectible(entities, camera_x)
         local ptype = PowerUp.getRandomType()
         collectible = PowerUp.new(spawn_x, spawn_y, ptype)
     else
-        collectible = Collectible.new(spawn_x, spawn_y, 1)
+        collectible = Collectible.new(spawn_x, spawn_y, DEFAULT_COLLECTIBLE_VALUE)
     end
 
     table.insert(entities, collectible)
