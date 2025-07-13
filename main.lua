@@ -96,6 +96,7 @@ local function init_game()
     -- Init sound manager
     game.soundManager = SoundManager.new()
     game.soundManager:playAmbience()
+    game.soundManager:playMusic()
 
     -- Initialize camera
     game.camera = Camera.new(CONFIG.scroll_speed)
@@ -214,10 +215,21 @@ local function transition_to_gameOver_if_needed(forceTransition)
     if game.state ~= "playing" then return end
 
     if ((game.player and game.player.health and game.player.health <= 0) or forceTransition) then
-        if globalGameState.highScore <= game.score then
+        -- Determine if the player achieved a new high score *before* updating it
+        local newHighScoreAchieved = game.score > globalGameState.highScore
+        if newHighScoreAchieved then
             globalGameState.highScore = game.score
         end
+
+        -- Stop background audio to avoid overlap in future runs
+        game.soundManager:stopMusic()
         game.soundManager:stopAmbience()
+
+        -- Play high-score jingle if a new high score was set (jingle internally stops music/ambience too)
+        if newHighScoreAchieved then
+            game.soundManager:playHighScoreJingle()
+        end
+
         game.state = "gameOver"
     end
 end
@@ -362,39 +374,39 @@ function love.draw()
 
         --extern number time;
         --extern Image displacement;
-       -- extern vec2 resolution;
+        -- extern vec2 resolution;
 
-       --extern vec3 topColor;
-       -- extern vec3 bottomColor;
-       -- extern float love_time;
-       -- extern vec2 screenSize;
+        --extern vec3 topColor;
+        -- extern vec3 bottomColor;
+        -- extern float love_time;
+        -- extern vec2 screenSize;
 
         reflection_shader:send("reflection_time", time)
         reflection_shader:send("displacement", displacementTex)
         reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
 
         love.graphics.setShader(sparkle_shader)
-        sparkle_shader:send("topColor", {0.05, 0.03, 0.7})      -- very dark blue
-       sparkle_shader:send("bottomColor", {0.0, 0.3, 0.4})     
-       sparkle_shader:send("love_time", time)
-       sparkle_shader:send("screenSize", {love.graphics.getWidth(), love.graphics.getHeight()})
+        sparkle_shader:send("topColor", { 0.05, 0.03, 0.7 }) -- very dark blue
+        sparkle_shader:send("bottomColor", { 0.0, 0.3, 0.4 })
+        sparkle_shader:send("love_time", time)
+        sparkle_shader:send("screenSize", { love.graphics.getWidth(), love.graphics.getHeight() })
 
-    
+
 
 
 
         love.graphics.setShader(ripple_shader)
-        
+
         ripple_shader:send("time", time)
         ripple_shader:send("wave_height", 0.02)
         ripple_shader:send("wave_speed", 0.1)
         ripple_shader:send("wave_freq", 5.0)
         love.graphics.push()
 
-      
+
         game.camera:draw_scrolling_map(water_map)
 
-        
+
 
 
 
