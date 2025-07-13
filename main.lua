@@ -251,10 +251,19 @@ function love.update(dt)
                     game.player:takeDamage(1)
                 end
 
-                -- Respawn to centre of screen (guaranteed walkable open space on map)
-                local respawn_x = cam_x + CONFIG.game_width / 2
-                local respawn_y = cam_y + CONFIG.game_height / 2
-                game.player:setPosition(respawn_x, respawn_y)
+                -- Compute safe respawn position
+                local centre_x = cam_x + CONFIG.game_width / 2
+                local centre_y = cam_y + CONFIG.game_height / 2
+                local safe_x, safe_y = utils.findSafeStandPosition(
+                    map,
+                    centre_x,
+                    centre_y,
+                    game.player.width,
+                    game.player.height,
+                    game.player.foot_offset
+                )
+
+                game.player:setPosition(safe_x, safe_y)
                 game.player:setVelocity(0, 0)
             end
         end
