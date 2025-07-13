@@ -31,11 +31,12 @@ function Camera:draw_scrolling_map(map)
     local map_width = map.width * map.tilewidth
 
     -- Calculate how many map instances we need to draw
+    -- Camera translation is applied globally in love.draw, so only handle horizontal tiling here.
     local start_offset = -math.floor(self.x / map_width) * map_width
 
     for i = 0, 2 do -- Draw 3 instances to ensure screen coverage
         local offset_x = start_offset + i * map_width - self.x
-        map:draw(offset_x, -self.y)
+        map:draw(offset_x, 0)
     end
 end
 
