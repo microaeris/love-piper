@@ -37,10 +37,6 @@ love .
 
 Install `butler` via the [Itch.io app](https://itch.io/app). The Itch.io app will automatically keep it updated.
 
-## Option 2:
-
-Replace the path to the butler installation in the script below. Then run the script.
-
 ```bash
 ./release.sh
 ```
