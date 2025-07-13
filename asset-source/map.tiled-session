@@ -37,7 +37,7 @@
         },
         "test.tmx": {
             "scale": 4.8606,
-            "selectedLayer": 1,
+            "selectedLayer": 2,
             "viewCenter": {
                 "x": 66.2469653952187,
                 "y": 74.4764020902769
@@ -62,8 +62,8 @@
             "scale": 4.0359,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 94.65051165787062,
-                "y": 76.81062464382171
+                "x": 94.89828786639907,
+                "y": 60.95294729800045
             }
         },
         "water.tmx#Water": {
@@ -88,6 +88,7 @@
     ],
     "project": "map.tiled-project",
     "recentFiles": [
+        "water.tmx",
         "test.tmx",
         "Grass.tsx",
         "Hills.tsx",

@@ -18,7 +18,7 @@
  <tileset firstgid="941" name="Tilled_Wide" tilewidth="8" tileheight="8" tilecount="308" columns="22">
   <image source="../assets/images/Tilled_Dirt_Wide_v2.png" width="176" height="112"/>
  </tileset>
- <layer id="1" name="Ocean" width="20" height="18">
+ <layer id="1" name="Ocean" width="20" height="18" visible="0">
   <data encoding="csv">
 12,6,12,14,12,4,6,14,13,12,12,12,13,4,4,4,6,14,13,12,
 12,14,12,13,5,5,12,13,14,5,6,13,5,6,5,12,12,13,14,12,
@@ -40,7 +40,7 @@
 9,14,4,13,13,5,5,6,4,13,5,13,6,14,6,1,14,13,5,5
 </data>
  </layer>
- <layer id="2" name="1" width="20" height="18" visible="0">
+ <layer id="2" name="1" width="20" height="18">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,67,63,63,63,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,67,63,63,63,0,0,0,0,

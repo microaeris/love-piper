@@ -91,6 +91,8 @@ local function init_game()
     map = sti("assets/maps/test_map.lua")
     local layer = map:addCustomLayer("Sprites", 4)
 
+    water_map = sti("assets/maps/water.lua")
+
     -- Init sound manager
     game.soundManager = SoundManager.new()
     game.soundManager:playAmbience()
@@ -111,7 +113,7 @@ local function init_game()
     end
 
     -- Create player entity
-    game.player = Player.new(CONFIG.game_width / 2, CONFIG.game_height / 2, 16, 16)
+    game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
 
     -- Initialize enemy spawner
     local spawner_config = {
@@ -140,6 +142,14 @@ local function init_game()
 
     game.entities = {}
     table.insert(game.entities, game.player)
+
+    -- Initate the shaderes
+    ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    love.graphics.setShader(ripple_shader)
+
+    lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    love.graphics.setShader(lighting_shader)
+
     -- Reset score
     game.score = 0
     -- Clear any lingering timed effects
@@ -348,6 +358,12 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
+        -- love.graphics.setShader(shader)
+        -- love.graphics.push()
+        -- game.camera:draw_scrolling_map(water_map)
+        -- love.graphics.pop()
+        -- love.graphics.setShader()
+
         -- Draw scrolling background (map)
         game.camera:draw_scrolling_map(map)
 
