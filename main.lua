@@ -8,7 +8,7 @@ local debug_helpers = require("src.debug_helpers")
 
 -- Game configuration
 local CONFIG = {
-    scale_factor = 5,
+    scale_factor = 1,
 }
 
 -- Game state variables

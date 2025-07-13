@@ -11,23 +11,23 @@ function Player.new(x, y, width, height)
     setmetatable(self, Player)
 
     -- Player-specific properties
-    self.speed = 70
+    self.speed = 90
     self.default_color = utils.colors.blue
     self.color = self.default_color
     self.is_hidden = false
     self.input_enabled = true
 
     -- Sprite setup
-    self.sprite = Sprite.new('assets/images/sprites/player.png', 48, 48)
+    self.sprite = Sprite.new('assets/images/sprites/player_sheet.png', 16, 16)
     -- Row one is walk down,
     -- Row two is walk up,
     -- Row three is walk left,
     -- Row four is walk right,
     -- (1,1) is idle.
     self.sprite:addAnimation('walk_down', '1-4,1', 0.1)
-    self.sprite:addAnimation('walk_up', '1-4,2', 0.1)
-    self.sprite:addAnimation('walk_left', '1-4,3', 0.1)
-    self.sprite:addAnimation('walk_right', '1-4,4', 0.1)
+    self.sprite:addAnimation('walk_up', '5-8,1', 0.1)
+    self.sprite:addAnimation('walk_left', '9-12,1', 0.1)
+    self.sprite:addAnimation('walk_right', '13-16,1', 0.1)
     self.sprite:addAnimation('idle', { { 1, 1 } }, 0.1)
     self.current_animation = 'idle'
     self.animation = self.sprite:cloneAnimation('idle')
@@ -106,7 +106,7 @@ function Player:update(map, dt)
     local dx, dy = self:handleInput()
     self:setVelocity(dx * self.speed, dy * self.speed)
 
-    -- Call parent update method
+    -- Call parent update method - Move the player
     if not Entity.update(self, map, dt) then
         return
     end
@@ -161,7 +161,7 @@ function Player:enableInput()
 end
 
 function Player:setSpeed(speed)
-    self.speed = speed or 200
+    self.speed = speed or 60
 end
 
 function Player:setDefaultColor(color)

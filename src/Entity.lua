@@ -10,9 +10,9 @@ Entity.__index = Entity
 function Entity:tryMove(map, dx, dy, dt)
     local next_x = self.x + dx * self.speed * dt
     local next_y = self.y + dy * self.speed * dt
+
     if utils.is_walkable(map, next_x, next_y) then
-        self.x = next_x
-        self.y = next_y
+        self:setPosition(next_x, next_y)
         return true
     end
     return false
@@ -83,6 +83,10 @@ end
 function Entity:setPosition(x, y)
     self.x = x or self.x
     self.y = y or self.y
+
+    -- Round to the sprite position to the nearest pixel
+    self.sprite_x = math.floor(self.x + 0.49)
+    self.sprite_y =  math.floor(self.y + 0.49)
 end
 
 -- Create a derived class from Entity
