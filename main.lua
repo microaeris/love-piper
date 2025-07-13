@@ -93,7 +93,13 @@ function love.load()
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
 
+
+    
+
     table.insert(game.entities, game.player)
+
+
+    
 end
 
 function love.update(dt)
