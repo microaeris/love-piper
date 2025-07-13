@@ -1,6 +1,24 @@
+-- Imports
+local utils = require("src.utils")
+
 -- Entity class for game objects
 local Entity = {}
 Entity.__index = Entity
+
+-- Helpers
+
+function Entity:tryMove(map, dx, dy, dt)
+    local next_x = self.x + dx * self.speed * dt
+    local next_y = self.y + dy * self.speed * dt
+    if utils.is_walkable(map, next_x, next_y) then
+        self.x = next_x
+        self.y = next_y
+        return true
+    end
+    return false
+end
+
+-- Entity class
 
 -- Constructor for creating a new entity
 function Entity.new(x, y, width, height)
@@ -26,11 +44,10 @@ function Entity.new(x, y, width, height)
 end
 
 -- Update the entity's position based on velocity
-function Entity:update(dt)
+function Entity:update(map, dt)
     if not self.active then return end
 
-    self.x = self.x + self.vx * dt
-    self.y = self.y + self.vy * dt
+    return self:tryMove(map, self.vx * dt, self.vy * dt, dt)
 end
 
 -- Draw the entity (default implementation is a rectangle)

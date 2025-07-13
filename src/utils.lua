@@ -21,6 +21,15 @@ function utils.lerp(a, b, t)
     return a + (b - a) * t
 end
 
+-- Check if a tile is walkable
+function utils.is_walkable(map, x, y, layer_index)
+    local layer = map.layers[layer_index or 2]  -- default to layer 2
+    local tile_x = math.floor(x / map.tilewidth) + 1
+    local tile_y = math.floor(y / map.tileheight) + 1
+    local tile = layer.data[tile_y] and layer.data[tile_y][tile_x]
+    return tile and tile.id ~= 0  -- or tile.gid ~= 0, depending on your map
+end
+
 -- Color utilities
 utils.colors = {
     -- Basic colors

@@ -45,7 +45,7 @@ end
 
 local function update_entities(dt)
     for _, entity in ipairs(game.entities) do
-        entity:update(dt)
+        entity:update(map, dt)
 
         if entity ~= game.player then
             if entity.x - entity.width / 2 < 0 or entity.x + entity.width / 2 > CONFIG.game_width then

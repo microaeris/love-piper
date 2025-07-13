@@ -99,7 +99,7 @@ function Player:handleInput()
 end
 
 -- Update player with input handling and boundary checking
-function Player:update(dt)
+function Player:update(map, dt)
     if not self.active then return end
 
     -- Handle input and set velocity
@@ -107,7 +107,9 @@ function Player:update(dt)
     self:setVelocity(dx * self.speed, dy * self.speed)
 
     -- Call parent update method
-    Entity.update(self, dt)
+    if not Entity.update(self, map, dt) then
+        return
+    end
 
     -- Update animation
     if self.animation then
