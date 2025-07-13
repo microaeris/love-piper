@@ -83,6 +83,8 @@ local function init_window()
     game.canvas = love.graphics.newCanvas(CONFIG.game_width, CONFIG.game_height)
     game.canvas:setFilter("nearest", "nearest")
 
+    game.shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+
     -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
 end
 
@@ -356,6 +358,11 @@ function love.draw()
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
         love.graphics.setShader(ripple_shader)
+        local time = love.timer.getTime()
+        ripple_shader:send("time", time)
+        ripple_shader:send("wave_height", 0.02)
+        ripple_shader:send("wave_speed", 0.1)
+        ripple_shader:send("wave_freq", 5.0)
         love.graphics.push()
         game.camera:draw_scrolling_map(water_map)
         love.graphics.pop()
@@ -374,6 +381,8 @@ function love.draw()
         love.graphics.translate(-cam_x, -cam_y)
         draw_entities()
         love.graphics.pop()
+
+
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
