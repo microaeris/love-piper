@@ -10,7 +10,7 @@ local ENEMY_TYPES = {
     {
         name = "basic",
         speed = 30,
-        color = utils.colors.red,
+        color = utils.colors.blue,
         width = 16,
         height = 16,
         health = 1,
