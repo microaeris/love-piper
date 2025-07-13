@@ -8,7 +8,9 @@ local debug_helpers = require("src.debug_helpers")
 
 -- Game configuration
 local CONFIG = {
-    scale_factor = 1,
+    base_width = 160,
+    base_height = 144,
+    scale_factor = 5,
 }
 
 -- Game state variables
@@ -23,19 +25,21 @@ local game = {
 -- Helpers
 local function init_window()
     -- Calculate scaling to fit window
-    local window_width = love.graphics.getWidth()
-    local window_height = love.graphics.getHeight()
+    -- local window_width = love.graphics.getWidth()
+    -- local window_height = love.graphics.getHeight()
 
     -- Set default filter to nearest
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     -- Create canvas for low-resolution rendering
-    game.canvas = love.graphics.newCanvas(window_width, window_height)
+    -- game.canvas = love.graphics.newCanvas(window_width, window_height)
+    game.canvas = love.graphics.newCanvas(CONFIG.base_width, CONFIG.base_height)
     game.canvas:setFilter("nearest", "nearest")
 
-    -- Set window size to accommodate scaled resolution
-    love.window.setMode(window_width * CONFIG.scale_factor,
-        window_height * CONFIG.scale_factor)
+    CONFIG.game_width  = CONFIG.base_width
+    CONFIG.game_height = CONFIG.base_height
+
+    -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
 end
 
 -- FIXME - create an entity controller class
