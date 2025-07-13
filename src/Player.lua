@@ -11,7 +11,7 @@ function Player.new(x, y, width, height)
     setmetatable(self, Player)
 
     -- Player-specific properties
-    self.speed = 200
+    self.speed = 70
     self.default_color = utils.colors.blue
     self.color = self.default_color
     self.is_hidden = false
@@ -108,12 +108,6 @@ function Player:update(dt)
 
     -- Call parent update method
     Entity.update(self, dt)
-
-    -- Keep player within screen bounds (use config dimensions if available)
-    local canvas_width = (self.config and self.config.game_width) or 320
-    local canvas_height = (self.config and self.config.game_height) or 240
-    self.x = utils.clamp(self.x, self.width / 2, canvas_width - self.width / 2)
-    self.y = utils.clamp(self.y, self.height / 2, canvas_height - self.height / 2)
 
     -- Update animation
     if self.animation then
