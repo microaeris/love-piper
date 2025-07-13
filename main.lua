@@ -141,7 +141,6 @@ local function init_game()
     love.graphics.setShader(lighting_shader)
 
     game.entities = {}
-    table.insert(game.entities, game.player)
 end
 
 -- FIXME - create an entity controller class
@@ -238,10 +237,6 @@ function love.update(dt)
             local cam_x, cam_y = game.camera:get_position()
             local screen_x = game.player.x - cam_x
             local screen_y = game.player.y - cam_y
-
-            if screen_x < -game.player.width or screen_x > CONFIG.game_width + game.player.width or screen_y < -game.player.height or screen_y > CONFIG.game_height + game.player.height then
-                game.player:resetToSpawn()
-            end
         end
 
         -- Clean up inactive entities

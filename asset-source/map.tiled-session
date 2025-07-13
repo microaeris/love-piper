@@ -33,11 +33,11 @@
             "scaleInEditor": 1
         },
         "test.tmx": {
-            "scale": 5.777,
+            "scale": 5.77,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 82.65535745196469,
-                "y": 71.6634931625411
+                "x": 59.79202772963605,
+                "y": 59.96533795493934
             }
         },
         "test.tmx#Grass": {
