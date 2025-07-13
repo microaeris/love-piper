@@ -1,4 +1,4 @@
-# Setup
+# Setup 
 
 Download love2d from https://love2d.org/
 ```bash
