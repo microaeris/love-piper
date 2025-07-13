@@ -54,6 +54,7 @@ local function init_game()
 
     -- Init sound manager
     game.soundManager = SoundManager.new()
+    game.soundManager:playMusic()
 
     -- Initialize camera
     game.camera = Camera.new(CONFIG.scroll_speed)
