@@ -7,3 +7,9 @@
 .DS_Store
 
 ./lib/*
+
+bin
+.hermit
+node_modules
+package.json
+package-lock.json
