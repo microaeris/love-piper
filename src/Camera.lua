@@ -18,11 +18,18 @@ function Camera:update(dt, map)
     -- Constantly scroll horizontally at fixed speed
     self.x = self.x + self.scroll_speed * dt
 
+    local wrapped = false
+    local wrap_offset = 0
+
     -- Make camera loop when it exceeds map width
     local map_width = map.width * map.tilewidth
     if self.x >= map_width then
         self.x = self.x - map_width
+        wrapped = true
+        wrap_offset = map_width
     end
+
+    return wrapped, wrap_offset
 end
 
 -- Draw the map with seamless looping using STI's built-in translation

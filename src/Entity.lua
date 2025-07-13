@@ -121,7 +121,7 @@ function Entity:setPosition(x, y)
 
     -- Round to the sprite position to the nearest pixel
     self.sprite_x = math.floor(self.x + 0.5)
-    self.sprite_y =  math.floor(self.y + 0.5)
+    self.sprite_y = math.floor(self.y + 0.5)
 end
 
 -- Create a derived class from Entity
