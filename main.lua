@@ -236,11 +236,27 @@ function love.update(dt)
         update_entities(dt)
         handle_collisions(dt)
 
-        -- If player moves off-screen, reset them to their spawn position
+        -- If player moves off-screen, inflict damage (once) and respawn near center of current view.
         do
             local cam_x, cam_y = game.camera:get_position()
-            local screen_x = game.player.x - cam_x
-            local screen_y = game.player.y - cam_y
+            local screen_x     = game.player.x - cam_x
+            local screen_y     = game.player.y - cam_y
+
+            local off_horiz    = (screen_x < -game.player.width) or (screen_x > CONFIG.game_width + game.player.width)
+            local off_vert     = (screen_y < -game.player.height) or (screen_y > CONFIG.game_height + game.player.height)
+
+            if off_horiz or off_vert then
+                -- Apply damage only if not already invincible (prevents rapid double hits)
+                if not game.player.invincible then
+                    game.player:takeDamage(1)
+                end
+
+                -- Respawn to centre of screen (guaranteed walkable open space on map)
+                local respawn_x = cam_x + CONFIG.game_width / 2
+                local respawn_y = cam_y + CONFIG.game_height / 2
+                game.player:setPosition(respawn_x, respawn_y)
+                game.player:setVelocity(0, 0)
+            end
         end
 
         -- Clean up inactive entities
