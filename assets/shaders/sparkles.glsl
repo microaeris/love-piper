@@ -7,7 +7,7 @@ extern vec3 topColor;
             return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
         }
 
-        vec3 starColor(vec2 p) {
+        vec3 sparkleColor(vec2 p) {
             float h = hash(p);
             if (h < 0.33) return vec3(1.0, 0.9, 0.7);      // warm yellowish
             else if (h < 0.66) return vec3(0.7, 0.8, 1.0); // cool bluish
@@ -19,24 +19,24 @@ extern vec3 topColor;
             float t = screen_coords.y / screenSize.y;
             vec3 col = mix(bottomColor, topColor, 1.0 - t);
 
-            float starDensity = 600.0;
-            float starThreshold = 0.9965;
+            float sparkleDensity = 600.0;
+            float sparkleThreshold = 0.9965;
 
          
             vec2 normCoords = screen_coords / screenSize;
 
       
-            float rnd = hash(normCoords * starDensity);
+            float rnd = hash(normCoords * sparkleDensity);
 
-            float starPresence = step(starThreshold, rnd);
+            float sparklePresence = step(sparkleThreshold, rnd);
 
 
             float flicker = 0.5 + 0.5 * sin(screen_coords.x * 20.0 + love_time * 15.0);
-            starPresence *= flicker;
+            sparklePresence *= flicker;
 
-            vec3 starCol = starColor(normCoords * starDensity);
+            vec3 sparkleCol = sparkleColor(normCoords * sparkleDensity);
 
-            col += starPresence * starCol;
+            col += sparklePresence * sparkleCol;
 
             col = min(col, vec3(1.0));
 

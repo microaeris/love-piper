@@ -385,11 +385,7 @@ function love.draw()
         reflection_shader:send("displacement", displacementTex)
         reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
 
-        love.graphics.setShader(sparkle_shader)
-        sparkle_shader:send("topColor", { 0.05, 0.03, 0.7 }) -- very dark blue
-        sparkle_shader:send("bottomColor", { 0.0, 0.3, 0.4 })
-        sparkle_shader:send("love_time", time)
-        sparkle_shader:send("screenSize", { love.graphics.getWidth(), love.graphics.getHeight() })
+        
 
 
 
@@ -402,6 +398,13 @@ function love.draw()
         ripple_shader:send("wave_speed", 0.1)
         ripple_shader:send("wave_freq", 5.0)
         love.graphics.push()
+
+
+        love.graphics.setShader(sparkle_shader)
+        sparkle_shader:send("topColor", { 0.05, 0.03, 0.7 }) -- very dark blue
+        sparkle_shader:send("bottomColor", { 0.0, 0.3, 0.4 })
+        sparkle_shader:send("love_time", time)
+        sparkle_shader:send("screenSize", { love.graphics.getWidth(), love.graphics.getHeight() })
 
 
         game.camera:draw_scrolling_map(water_map)
