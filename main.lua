@@ -12,6 +12,8 @@ local debug_helpers = require("src.debug_helpers")
 local Menu = require("src.Menu")
 local SoundManager = require("src.SoundManager")
 local ShaderManager = require("src.ShaderManager")
+local LayerShaderManager = require("src.LayerShaderManager")
+local CustomMapDrawer = require("src.CustomMapDrawer")
 
 -- Game configuration
 local CONFIG = {
@@ -40,6 +42,8 @@ local game = {
     shaderManager = nil,
     enemySpawner = nil,
     collectibleSpawner = nil,
+    layerShaderManager = nil,
+    customMapDrawer = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
@@ -72,12 +76,19 @@ local function init_game()
     -- Initialize camera
     game.camera = Camera.new(CONFIG.scroll_speed)
 
-    -- Initialize shader manager
+    -- Initialize shader managers
     game.shaderManager = ShaderManager.new()
     game.shaderManager:loadAllShaders()
-    game.shaderManager:setActiveShader("lighting")
-    game.shaderManager:setActiveShader("ripples")
-    game.shaderManager:setActiveShader("crt")
+
+    game.layerShaderManager = LayerShaderManager.new()
+
+    -- Create custom map drawer
+    game.customMapDrawer = CustomMapDrawer.new(map, game.layerShaderManager, game.shaderManager)
+
+    -- Assign shaders to specific layers (example)
+    game.layerShaderManager:assignShader("Water", "crt")
+    game.layerShaderManager:assignShader("Grass", "lighting")
+    -- game.layerShaderManager:assignShader("Hills", "ripples")
 
     -- Get player spawn position
     local player_map_obj
@@ -122,8 +133,6 @@ local function init_game()
 
     table.insert(game.entities, game.player)
 end
-
-
 
 -- FIXME - create an entity controller class
 local function draw_entities()
@@ -234,8 +243,14 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        -- Draw scrolling background (map)
-        game.camera:draw_scrolling_map(map)
+        -- Draw scrolling background (map) with layer-specific shaders
+        local map_width_px = map.width * map.tilewidth
+        local start_offset = -math.floor(game.camera.x / map_width_px) * map_width_px
+
+        for i = 0, 2 do -- Draw 3 instances for seamless looping
+            local offset_x = start_offset + i * map_width_px - game.camera.x
+            game.customMapDrawer:draw(offset_x, -game.camera.y)
+        end
 
         -- Draw entities with camera transform
         love.graphics.push()
@@ -250,8 +265,14 @@ function love.draw()
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print("Score: " .. tostring(game.score), 10, 10)
     elseif game.state == "paused" then
-        -- Draw the game world in the background
-        game.camera:draw_scrolling_map(map)
+        -- Draw the game world in the background with layer-specific shaders
+        local map_width_px = map.width * map.tilewidth
+        local start_offset = -math.floor(game.camera.x / map_width_px) * map_width_px
+
+        for i = 0, 2 do -- Draw 3 instances for seamless looping
+            local offset_x = start_offset + i * map_width_px - game.camera.x
+            game.customMapDrawer:draw(offset_x, -game.camera.y)
+        end
 
         -- Draw entities with camera transform
         love.graphics.push()
@@ -268,18 +289,10 @@ function love.draw()
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
     end
 
-    -- Switch back to main screen and draw the scaled canvas with shader
+    -- Switch back to main screen and draw the scaled canvas
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
-
-    -- Apply shader to the final canvas draw
-    if game.shaderManager then
-        game.shaderManager:drawWithShader(function()
-            love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
-        end)
-    else
-        love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
-    end
+    love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
 end
 
 function love.keypressed(key)
