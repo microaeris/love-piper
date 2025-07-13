@@ -1,70 +1,85 @@
--- Pattern functions for enemy wave spawns
--- Each function returns dx, dy offsets based on the enemy's index in the wave
--- index:   1-based index of the enemy in the current wave
--- count:   total enemies in the wave
--- spacing: pixel spacing between consecutive enemies
+-- Pattern definitions for enemy waves
+-- Each pattern entry contains:
+--   offsets(index, wave_size, spacing) -> dx, dy
+--   wave_size  : number of enemies in the formation
+--   spacing    : pixel spacing between consecutive enemies (optional)
+--   enemy_type : preferred enemy template (optional)
+--
+-- EnemySpawner will request a random pattern via spawn_patterns.randomPattern().
 
-local patterns = {}
+local spawn_patterns = {}
 
--- Horizontal line moving rightwards (x offset increases)
-function patterns.horizontal_line(index, count, spacing)
-    return (index - 1) * spacing, 0
+---------------------------------------------------------------------
+-- Utility helpers
+---------------------------------------------------------------------
+local function addPattern(name, def)
+    spawn_patterns[name] = def
 end
 
--- Vertical line moving downward (y offset increases)
-function patterns.vertical_line(index, count, spacing)
-    return 0, (index - 1) * spacing
+local function getKeys(tbl)
+    local keys = {}
+    for k in pairs(tbl) do table.insert(keys, k) end
+    return keys
 end
 
--- Down-right diagonal line
-function patterns.diagonal_down(index, count, spacing)
-    local offset = (index - 1) * spacing
-    return offset, offset
+function spawn_patterns.randomPattern()
+    local keys = {}
+    for k, v in pairs(spawn_patterns) do
+        if type(v) == "table" then
+            table.insert(keys, k)
+        end
+    end
+    assert(#keys > 0, "No patterns registered in spawn_patterns.lua")
+    local name = keys[math.random(#keys)]
+    return name, spawn_patterns[name]
 end
 
--- V-shape (⩓). Enemies on the edges are lower than those near the centre.
-function patterns.v_shape(index, count, spacing)
-    local mid = (count + 1) / 2
-    local dx = (index - 1) * spacing
-    local dy = math.abs(index - mid) * spacing
-    return dx, dy
-end
+---------------------------------------------------------------------
+-- Pattern implementations
+---------------------------------------------------------------------
 
--- Circle pattern – enemies evenly distributed on a circle
-function patterns.circle(index, count, spacing)
-    -- Distribute points uniformly around a circle
-    local angle = (index - 1) / count * 2 * math.pi
-    -- Make radius scale with count a bit so large waves spread out
-    local radius = spacing * ((count - 1) / (2 * math.pi) + 1)
-    return math.cos(angle) * radius, math.sin(angle) * radius
-end
+-- 1. Vertical line of 3 fast enemies
+addPattern("vertical_line", {
+    wave_size = 3,
+    spacing = 24,
+    enemy_type = "fast",
+    offsets = function(index, wave_size, spacing)
+        return 0, (index - 1) * spacing
+    end
+})
 
--- Sine-wave pattern moving left-to-right while oscillating vertically
-function patterns.sine_wave(index, count, spacing)
-    local dx = (index - 1) * spacing
-    local amplitude = spacing * 2
-    local frequency = 2 * math.pi / count
-    local dy = math.sin((index - 1) * frequency) * amplitude
-    return dx, dy
-end
+-- 2. Horizontal line
+addPattern("horizontal_line", {
+    wave_size = 4,
+    spacing = 24,
+    enemy_type = "basic",
+    offsets = function(index, wave_size, spacing)
+        return (index - 1) * spacing, 0
+    end
+})
 
--- Zig-zag pattern (alternating up/down offsets)
-function patterns.zigzag(index, count, spacing)
-    local dx = (index - 1) * spacing
-    local amplitude = spacing
-    local dy = (index % 2 == 0) and amplitude or -amplitude
-    return dx, dy
-end
+-- 3. Diagonal down-right
+addPattern("diagonal_down", {
+    wave_size = 4,
+    spacing = 24,
+    enemy_type = "basic",
+    offsets = function(index, wave_size, spacing)
+        local o = (index - 1) * spacing
+        return o, o
+    end
+})
 
--- Random cluster pattern – scatter within a square of radius based on spacing
-function patterns.random_cluster(index, count, spacing)
-    local radius = spacing * count / 2
-    local dx = (math.random() * 2 - 1) * radius
-    local dy = (math.random() * 2 - 1) * radius
-    return dx, dy
-end
+-- 4. V-shape
+addPattern("v_shape", {
+    wave_size = 5,
+    spacing = 24,
+    enemy_type = "wobbler",
+    offsets = function(index, wave_size, spacing)
+        local mid = (wave_size + 1) / 2
+        local dx = (index - 1) * spacing
+        local dy = math.abs(index - mid) * spacing
+        return dx, dy
+    end
+})
 
--- Fallback pattern (alias of horizontal_line)
-patterns.default = patterns.horizontal_line
-
-return patterns
+return spawn_patterns

@@ -16,10 +16,7 @@ function EnemySpawner.new(config)
     self.max_enemies = config.max_enemies or 8
     self.game_width = config.game_width
     self.game_height = config.game_height
-    -- For debugging: default to a simple vertical line of three enemies
-    self.patterns = config.enemy_spawn_patterns or { "vertical_line" }
-    self.wave_size = config.wave_size or 3              -- number of enemies per wave
-    self.pattern_spacing = config.pattern_spacing or 24 -- pixels between enemies within a pattern
+    -- No pattern configuration here; handled entirely by spawn_patterns.lua
     -- Offsets and margins (must be provided by config)
     assert(config.spawn_margin_y, "spawn_margin_y must be provided in spawner config")
     assert(config.spawn_offset_x, "spawn_offset_x must be provided in spawner config")
@@ -28,10 +25,7 @@ function EnemySpawner.new(config)
 
     -- State
     self.spawn_timer = 0
-    -- Mapping from pattern name to preferred enemy type name
-    self.pattern_enemy_map = {
-        vertical_line = "fast"
-    }
+    -- No pattern->enemy mapping here; pattern definitions include enemy_type
 
     return self
 end
@@ -43,13 +37,9 @@ function EnemySpawner:update(dt, entities, camera_x)
     if self.spawn_timer >= self.spawn_interval then
         self.spawn_timer = 0
 
-        -- Random chance to spawn (wave or single enemy)
         if math.random() < self.spawn_chance then
-            if self.wave_size and self.wave_size > 1 then
-                self:spawnWave(entities, camera_x)
-            else
-                self:spawnEnemy(entities, camera_x)
-            end
+            local pattern_name, pattern_def = spawn_patterns.randomPattern()
+            self:spawnPattern(pattern_name, pattern_def, entities, camera_x)
         end
     end
 end
@@ -77,34 +67,29 @@ function EnemySpawner:spawnEnemy(entities, camera_x)
     debug_helpers.log("Enemy spawned: " .. enemy.enemy_type .. " at (" .. spawn_x .. ", " .. spawn_y .. ")", "DEBUG")
 end
 
--- Spawn a new wave of enemies
-function EnemySpawner:spawnWave(entities, camera_x)
+-- Spawn enemies following a chosen pattern definition
+function EnemySpawner:spawnPattern(pattern_name, pattern_def, entities, camera_x)
     -- Respect max enemy limit
-    local active_enemies = self:countActiveEnemies(entities)
-    if active_enemies >= self.max_enemies then
-        return
-    end
+    if self:countActiveEnemies(entities) >= self.max_enemies then return end
 
-    local cam_x = camera_x or 0
-    local base_x = cam_x + self.game_width + self.spawn_offset_x
+    local cam_x      = camera_x or 0
+    local base_x     = cam_x + self.game_width + self.spawn_offset_x
 
-    -- Choose a random pattern from the available list
-    local pattern_name = self.patterns[math.random(1, #self.patterns)]
-    local pattern_fn = spawn_patterns[pattern_name] or spawn_patterns.default
+    local wave_size  = pattern_def.wave_size or 1
+    local spacing    = pattern_def.spacing or 24
+    local pattern_fn = pattern_def.offsets
 
-    -- Determine enemy template for this wave
-    local preferred_type_name = self.pattern_enemy_map[pattern_name]
     local wave_enemy_template
-    if preferred_type_name then
-        wave_enemy_template = Enemy.getTypeByName(preferred_type_name)
+    if pattern_def.enemy_type then
+        wave_enemy_template = Enemy.getTypeByName(pattern_def.enemy_type)
     end
 
     -- Pre-compute pattern offsets to preserve relative positions and keep the
     -- whole formation on-screen without clamping each enemy individually.
     local offsets = {}
     local min_dy, max_dy = math.huge, -math.huge
-    for i = 1, self.wave_size do
-        local dx, dy = pattern_fn(i, self.wave_size, self.pattern_spacing)
+    for i = 1, wave_size do
+        local dx, dy = pattern_fn(i, wave_size, spacing)
         offsets[i] = { dx = dx, dy = dy }
         if dy < min_dy then min_dy = dy end
         if dy > max_dy then max_dy = dy end
@@ -120,7 +105,7 @@ function EnemySpawner:spawnWave(entities, camera_x)
     local base_y = math.random(min_allowed, max_allowed)
 
     local spawned = 0
-    for i = 1, self.wave_size do
+    for i = 1, wave_size do
         if self:countActiveEnemies(entities) >= self.max_enemies then
             break
         end
@@ -135,7 +120,7 @@ function EnemySpawner:spawnWave(entities, camera_x)
         spawned = spawned + 1
     end
 
-    debug_helpers.log(string.format("Wave spawned (%d enemies) using pattern '%s'", spawned, pattern_name), "DEBUG")
+    debug_helpers.log(string.format("Pattern '%s' spawned (%d enemies)", pattern_name, spawned), "DEBUG")
 end
 
 -- Count active enemies in the entities list
