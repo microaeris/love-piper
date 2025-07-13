@@ -6,7 +6,7 @@ local spawn_patterns          = require("src.spawn_patterns")
 -- Constants ------------------------------------------------------------------------------
 local DEFAULT_SPAWN_INTERVAL  = 2.0 -- Seconds between spawn checks
 local DEFAULT_SPAWN_CHANCE    = 0.7 -- Probability of spawning each interval
-local DEFAULT_MAX_ENEMIES     = 8   -- Maximum number of active enemies
+local DEFAULT_MAX_ENEMIES     = 24  -- Maximum number of active enemies
 local DEFAULT_PATTERN_SPACING = 24  -- Default spacing between enemies inside a pattern
 
 local EnemySpawner            = {}
@@ -17,9 +17,9 @@ function EnemySpawner.new(config)
     local self          = setmetatable({}, EnemySpawner)
 
     -- Configuration
-    self.spawn_interval = config.enemy_spawn_interval or DEFAULT_SPAWN_INTERVAL
-    self.spawn_chance   = config.enemy_spawn_chance or DEFAULT_SPAWN_CHANCE
-    self.max_enemies    = config.max_enemies or DEFAULT_MAX_ENEMIES
+    self.spawn_interval = DEFAULT_SPAWN_INTERVAL
+    self.spawn_chance   = DEFAULT_SPAWN_CHANCE
+    self.max_enemies    = DEFAULT_MAX_ENEMIES
     self.game_width     = config.game_width
     self.game_height    = config.game_height
     -- No pattern configuration here; handled entirely by spawn_patterns.lua

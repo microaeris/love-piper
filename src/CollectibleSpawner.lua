@@ -4,10 +4,10 @@ local PowerUp                   = require("src.PowerUp")
 local debug_helpers             = require("src.debug_helpers")
 
 -- Constants ------------------------------------------------------------------------------
-local DEFAULT_SPAWN_INTERVAL    = 2.0  -- Seconds between spawn checks
-local DEFAULT_SPAWN_CHANCE      = 0.75 -- Probability of spawning each interval
+local DEFAULT_SPAWN_INTERVAL    = 0.5  -- Seconds between spawn checks
+local DEFAULT_SPAWN_CHANCE      = 1.0  -- Probability of spawning each interval
 local DEFAULT_POWERUP_CHANCE    = 0.15 -- Chance that a spawned collectible is a power-up
-local DEFAULT_MAX_COLLECTIBLES  = 10   -- Maximum number of active collectibles
+local DEFAULT_MAX_COLLECTIBLES  = 25   -- Maximum number of active collectibles
 local DEFAULT_COLLECTIBLE_VALUE = 1    -- Score value for basic collectibles
 
 local CollectibleSpawner        = {}
@@ -18,11 +18,10 @@ function CollectibleSpawner.new(config)
     local self            = setmetatable({}, CollectibleSpawner)
 
     -- Configuration
-    self.spawn_interval   = config.collectible_spawn_interval or DEFAULT_SPAWN_INTERVAL
-    self.spawn_chance     = config.collectible_spawn_chance or DEFAULT_SPAWN_CHANCE
-    self.powerup_chance   = config.powerup_chance or
-    DEFAULT_POWERUP_CHANCE                                                  -- Chance that a spawned collectible is a power-up
-    self.max_collectibles = config.max_collectibles or DEFAULT_MAX_COLLECTIBLES
+    self.spawn_interval   = DEFAULT_SPAWN_INTERVAL
+    self.spawn_chance     = DEFAULT_SPAWN_CHANCE
+    self.powerup_chance   = DEFAULT_POWERUP_CHANCE
+    self.max_collectibles = DEFAULT_MAX_COLLECTIBLES
     self.game_width       = config.game_width
     self.game_height      = config.game_height
 
