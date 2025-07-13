@@ -12,6 +12,9 @@
     "exportAsImage.visibleLayersOnly": true,
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "": {
+            "scaleInDock": 8.4475
+        },
         "Grass.tsx": {
             "scaleInDock": 5.5,
             "scaleInEditor": 1
@@ -33,11 +36,11 @@
             "scaleInEditor": 1
         },
         "test.tmx": {
-            "scale": 5.77,
+            "scale": 4.8606,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 59.79202772963605,
-                "y": 59.96533795493934
+                "x": 66.2469653952187,
+                "y": 74.4764020902769
             }
         },
         "test.tmx#Grass": {
@@ -54,6 +57,17 @@
         },
         "test.tmx#Water": {
             "scaleInDock": 5.5
+        },
+        "water.tmx": {
+            "scale": 4.0359,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 94.65051165787062,
+                "y": 76.81062464382171
+            }
+        },
+        "water.tmx#Water": {
+            "scaleInDock": 8.1731
         }
     },
     "last.exportedFilePath": "/Users/aeris/my_docs/development/love-piper/assets/maps",
