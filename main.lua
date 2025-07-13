@@ -11,9 +11,6 @@ local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
 local Menu = require("src.Menu")
 local SoundManager = require("src.SoundManager")
-local ShaderManager = require("src.ShaderManager")
-local LayerShaderManager = require("src.LayerShaderManager")
-local CustomMapDrawer = require("src.CustomMapDrawer")
 
 -- Game configuration
 local CONFIG = {
@@ -47,11 +44,8 @@ local game = {
     player = nil,
     soundManager = nil,
     camera = nil,
-    shaderManager = nil,
     enemySpawner = nil,
     collectibleSpawner = nil,
-    layerShaderManager = nil,
-    customMapDrawer = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
@@ -83,20 +77,6 @@ local function init_game()
 
     -- Initialize camera
     game.camera = Camera.new(CONFIG.scroll_speed)
-
-    -- Initialize shader managers
-    game.shaderManager = ShaderManager.new()
-    game.shaderManager:loadAllShaders()
-
-    game.layerShaderManager = LayerShaderManager.new()
-
-    -- Create custom map drawer
-    game.customMapDrawer = CustomMapDrawer.new(map, game.layerShaderManager, game.shaderManager)
-
-    -- Assign shaders to specific layers (example)
-    game.layerShaderManager:assignShader("Water", "crt")
-    game.layerShaderManager:assignShader("Grass", "lighting")
-    -- game.layerShaderManager:assignShader("Hills", "ripples")
 
     -- Get player spawn position
     local player_map_obj
@@ -222,11 +202,6 @@ function love.update(dt)
         -- Update world
         map:update(dt)
 
-        -- Update shader manager
-        if game.shaderManager then
-            game.shaderManager:update(dt)
-        end
-
         -- Update enemy spawning (pass current camera position so spawns are in world coords)
         local cam_x, _ = game.camera:get_position()
         game.enemySpawner:update(dt, game.entities, cam_x)
@@ -291,14 +266,8 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        -- Draw scrolling background (map) with layer-specific shaders
-        local map_width_px = map.width * map.tilewidth
-        local start_offset = -math.floor(game.camera.x / map_width_px) * map_width_px
-
-        for i = 0, 2 do -- Draw 3 instances for seamless looping
-            local offset_x = start_offset + i * map_width_px - game.camera.x
-            game.customMapDrawer:draw(offset_x, -game.camera.y)
-        end
+        -- Draw scrolling background (map)
+        game.camera:draw_scrolling_map(map)
 
         -- Draw entities with camera transform
         love.graphics.push()
@@ -314,14 +283,8 @@ function love.draw()
         love.graphics.print("Score: " .. tostring(game.score), 10, 10)
         love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
     elseif game.state == "paused" then
-        -- Draw the game world in the background with layer-specific shaders
-        local map_width_px = map.width * map.tilewidth
-        local start_offset = -math.floor(game.camera.x / map_width_px) * map_width_px
-
-        for i = 0, 2 do -- Draw 3 instances for seamless looping
-            local offset_x = start_offset + i * map_width_px - game.camera.x
-            game.customMapDrawer:draw(offset_x, -game.camera.y)
-        end
+        -- Draw the game world in the background
+        game.camera:draw_scrolling_map(map)
 
         -- Draw entities with camera transform
         love.graphics.push()
