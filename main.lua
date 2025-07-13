@@ -145,10 +145,7 @@ local function init_game()
 
     -- Initate the shaderes
     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
-    love.graphics.setShader(ripple_shader)
-
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
-    love.graphics.setShader(lighting_shader)
 
     -- Reset score
     game.score = 0
@@ -358,14 +355,18 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        -- love.graphics.setShader(shader)
-        -- love.graphics.push()
-        -- game.camera:draw_scrolling_map(water_map)
-        -- love.graphics.pop()
-        -- love.graphics.setShader()
+        love.graphics.setShader(ripple_shader)
+        love.graphics.push()
+        game.camera:draw_scrolling_map(water_map)
+        love.graphics.pop()
+        love.graphics.setShader()
 
         -- Draw scrolling background (map)
+        love.graphics.setShader(lighting_shader)
+        love.graphics.push()
         game.camera:draw_scrolling_map(map)
+        love.graphics.pop()
+        love.graphics.setShader()
 
         -- Draw entities with camera transform
         love.graphics.push()
