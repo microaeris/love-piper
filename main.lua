@@ -100,7 +100,9 @@ local function init_game()
         enemy_spawn_chance = CONFIG.enemy_spawn_chance,
         max_enemies = CONFIG.max_enemies,
         game_width = CONFIG.game_width,
-        game_height = CONFIG.game_height
+        game_height = CONFIG.game_height,
+        spawn_margin_y = math.floor(CONFIG.game_height * 0.05),
+        spawn_offset_x = math.floor(CONFIG.game_width * 0.08)
     }
     game.enemySpawner = EnemySpawner.new(spawner_config)
 
@@ -110,7 +112,9 @@ local function init_game()
         collectible_spawn_chance = CONFIG.collectible_spawn_chance,
         max_collectibles = CONFIG.max_collectibles,
         game_width = CONFIG.game_width,
-        game_height = CONFIG.game_height
+        game_height = CONFIG.game_height,
+        spawn_margin_y = math.floor(CONFIG.game_height * 0.05),
+        spawn_offset_x = math.floor(CONFIG.game_width * 0.08)
     }
     game.collectibleSpawner = CollectibleSpawner.new(collectible_config)
 
