@@ -67,6 +67,17 @@ local function init_game()
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
 
+    ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
+    love.graphics.setShader(ripple_shader)
+
+
+    lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    love.graphics.setShader(lighting_shader)
+
+    lighting_shader:send("topColor", {0.05, 0.05, 0.15})     -- blue
+    lighting_shader:send("bottomColor", {0.4, 0.2, 0.3})  
+
+
     table.insert(game.entities, game.player)
 end
 
