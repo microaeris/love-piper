@@ -12,6 +12,7 @@ local Player              = Entity:extend()
 
 -- Constructor for creating a new player
 function Player.new(x, y, width, height)
+    -- TODO(jm): Tuning point.
     local self = Entity.new(x, y, width, height, 8) -- 8 is the foot offset
     setmetatable(self, Player)
 
@@ -213,16 +214,28 @@ function Player:setDefaultColor(color)
     self.default_color = color or utils.colors.blue
 end
 
+-- Activate invincibility state for the given duration (in seconds)
+function Player:activateInvincibility(duration)
+    duration = duration or INVINCIBLE_DURATION
+    -- If already invincible, just extend the timer
+    if self.invincible then
+        self.invincibility_timer = math.max(self.invincibility_timer, duration)
+    else
+        self.invincible = true
+        self.invincibility_timer = duration
+        -- Blink setup
+        self.blink_timer = BLINK_INTERVAL
+        self.visible = false
+    end
+end
+
 function Player:takeDamage(amount)
     if self.invincible then return end -- already invincible, ignore
     amount = amount or 1
     self.health = math.max(0, self.health - amount)
 
-    -- Start invincibility phase
-    self.invincible = true
-    self.invincibility_timer = INVINCIBLE_DURATION
-    self.blink_timer = BLINK_INTERVAL
-    self.visible = false
+    -- Start invincibility phase using the new helper
+    self:activateInvincibility(INVINCIBLE_DURATION)
 end
 
 -- Return the Player class
