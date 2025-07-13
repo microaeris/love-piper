@@ -30,6 +30,11 @@ function Player.new(x, y, width, height)
     self.blink_timer         = 0
     self.visible             = true
 
+    -- TODO(jm): Tuning point.
+    -- Collision box narrower than sprite for smoother navigation
+    self.collision_width     = width * 0.35  -- narrower hitbox
+    self.collision_height    = height * 0.35 -- shorter hitbox
+
     -- Sprite setup
     self.sprite              = Sprite.new('assets/images/sprites/player_sheet.png', width, height)
     -- Row one is walk down,
