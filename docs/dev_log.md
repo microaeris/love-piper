@@ -1,0 +1,1 @@
+- [ ] Edit the love.js build to not put the blue border around the canvas
