@@ -60,19 +60,19 @@ local function init_game()
     game.camera = Camera.new(CONFIG.scroll_speed)
 
     -- Get player spawn position
-    local player_map_obj
-    for k, object in pairs(map.objects) do
-        if object.name == "Player" then
-            player_map_obj = object
-            break
-        end
-    end
+	local player_map_obj
+	for k, object in pairs(map.objects) do
+		if object.name == "Player" then
+			player_map_obj = object
+			break
+		end
+	end
     if not player_map_obj then
         error("Player spawn position not found in map")
     end
 
-    -- Create player entity - start them at a reasonable position on screen
-    game.player = Player.new(CONFIG.game_width / 4, CONFIG.game_height / 2, 48, 48)
+    -- Create player entity
+    game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
 
      ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
      love.graphics.setShader(ripple_shader)
@@ -96,28 +96,6 @@ end
 local function update_entities(dt)
     for _, entity in ipairs(game.entities) do
         entity:update(map, dt)
-
-        -- Keep player within screen bounds
-        if entity == game.player then
-            if entity.x < entity.width / 2 then
-                entity.x = entity.width / 2
-            elseif entity.x > CONFIG.game_width - entity.width / 2 then
-                entity.x = CONFIG.game_width - entity.width / 2
-            end
-            if entity.y < entity.height / 2 then
-                entity.y = entity.height / 2
-            elseif entity.y > CONFIG.game_height - entity.height / 2 then
-                entity.y = CONFIG.game_height - entity.height / 2
-            end
-        else
-            -- Other entities bounce off screen bounds
-            if entity.x - entity.width / 2 < 0 or entity.x + entity.width / 2 > CONFIG.game_width then
-                entity.vx = -entity.vx
-            end
-            if entity.y - entity.height / 2 < 0 or entity.y + entity.height / 2 > CONFIG.game_height then
-                entity.vy = -entity.vy
-            end
-        end
     end
 end
 
@@ -139,13 +117,6 @@ function love.load()
     if CONFIG.skip_start_menu then
         init_game()
     end
-
-    if not player_map_obj then
-        error("Player spawn position not found in map")
-    end
-
-    -- Create player entity
-    game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
 
     table.insert(game.entities, game.player)
 end
