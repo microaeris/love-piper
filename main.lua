@@ -145,6 +145,8 @@ local function init_game()
     -- Initate the shaderes
     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    reflection_shader = love.graphics.newShader("assets/shaders/reflection.glsl")
+    sparkle_shader = love.graphics.newShader("assets/shaders/sparkles.glsl")
 
     -- Reset score
     game.score = 0
@@ -354,14 +356,48 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        love.graphics.setShader(ripple_shader)
+        love.graphics.setShader(reflection_shader)
         local time = love.timer.getTime()
+        local displacementTex = love.graphics.newImage("assets/images/Water.png")
+
+        --extern number time;
+        --extern Image displacement;
+       -- extern vec2 resolution;
+
+       --extern vec3 topColor;
+       -- extern vec3 bottomColor;
+       -- extern float love_time;
+       -- extern vec2 screenSize;
+
+        reflection_shader:send("reflection_time", time)
+        reflection_shader:send("displacement", displacementTex)
+        reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
+
+        love.graphics.setShader(sparkle_shader)
+        sparkle_shader:send("topColor", {0.05, 0.03, 0.7})      -- very dark blue
+       sparkle_shader:send("bottomColor", {0.0, 0.3, 0.4})     
+       sparkle_shader:send("love_time", time)
+       sparkle_shader:send("screenSize", {love.graphics.getWidth(), love.graphics.getHeight()})
+
+    
+
+
+
+        love.graphics.setShader(ripple_shader)
+        
         ripple_shader:send("time", time)
         ripple_shader:send("wave_height", 0.02)
         ripple_shader:send("wave_speed", 0.1)
         ripple_shader:send("wave_freq", 5.0)
         love.graphics.push()
+
+      
         game.camera:draw_scrolling_map(water_map)
+
+        
+
+
+
         love.graphics.pop()
         love.graphics.setShader()
 
