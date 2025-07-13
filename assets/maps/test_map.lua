@@ -242,7 +242,7 @@ return {
       id = 4,
       name = "Sprites",
       class = "",
-      visible = true,
+      visible = false,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
