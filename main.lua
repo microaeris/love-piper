@@ -74,8 +74,7 @@ local function init_game()
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
     love.graphics.setShader(lighting_shader)
 
-    lighting_shader:send("topColor", {0.05, 0.05, 0.15})     -- blue
-    lighting_shader:send("bottomColor", {0.4, 0.2, 0.3})  
+    
 
 
     table.insert(game.entities, game.player)
@@ -157,6 +156,8 @@ function love.draw()
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
+
+   
 
     -- love.graphics.print("Hello World", 0, 0)
 end
