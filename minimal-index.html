@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Piper</title>
+
+    <style>
+        /* ---------- page layout ---------- */
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: none;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ---------- canvas styling ---------- */
+        canvas {
+            width: 800px;
+            height: 720px;
+            /* fixed CSS size = logical size  */
+            image-rendering: pixelated;
+            user-select: none;
+            /* no text/image selection glow   */
+            -webkit-user-select: none;
+            outline: none;
+            /* no default blue focus ring     */
+        }
+
+        canvas:focus {
+            outline: none;
+        }
+
+        /* older browsers */
+
+        /* also stop body itself from showing a ring if it ever gains focus */
+        body:focus {
+            outline: none;
+        }
+    </style>
+</head>
+
+<body tabindex="0">
+    <canvas id="canvas" width="800" height="720" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+
+    <script>
+        /* ---- 1. bootstrap for love.js ---- */
+        var Module = {
+            arguments: ["./game.love"],
+            INITIAL_MEMORY: 28719952,
+            printErr: console.error.bind(console),
+            canvas: document.getElementById("canvas")
+        };
+
+        /* ---- 2. ensure keys reach LÖVE inside itch.io iframe ---- */
+        function grabFocus() {
+            Module.canvas.focus();   // key events hit <canvas>
+            window.focus();          // belt-and-suspenders for some browsers
+        }
+        window.addEventListener("load", grabFocus);
+        window.addEventListener("click", grabFocus);
+
+        /* ---- 3. start the engine when love.js finishes loading ---- */
+    </script>
+
+    <script src="game.js"></script>
+    <script async src="love.js" onload="Love(Module)"></script>
+</body>
+
+</html>

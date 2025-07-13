@@ -5,10 +5,14 @@ local sti = require "lib.Simple-Tiled-Implementation.sti"
 local Player = require("src.Player")
 local utils = require("src.utils")
 local debug_helpers = require("src.debug_helpers")
+local Menu = require("src.Menu")
 
 -- Game configuration
 local CONFIG = {
-    scale_factor = 1,
+    base_width = 160,
+    base_height = 144,
+    scale_factor = 5,
+    skip_start_menu = true, -- Set to true to skip start menu for development
 }
 
 -- Game state variables
@@ -18,24 +22,47 @@ local game = {
     player = nil,
     -- Canvas settings for scaled rendering
     canvas = nil,
+    -- Game state management
+    state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused"
 }
 
 -- Helpers
 local function init_window()
-    -- Calculate scaling to fit window
-    local window_width = love.graphics.getWidth()
-    local window_height = love.graphics.getHeight()
-
     -- Set default filter to nearest
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     -- Create canvas for low-resolution rendering
-    game.canvas = love.graphics.newCanvas(window_width, window_height)
+    -- game.canvas = love.graphics.newCanvas(window_width, window_height)
+    game.canvas = love.graphics.newCanvas(CONFIG.base_width, CONFIG.base_height)
     game.canvas:setFilter("nearest", "nearest")
 
-    -- Set window size to accommodate scaled resolution
-    love.window.setMode(window_width * CONFIG.scale_factor,
-        window_height * CONFIG.scale_factor)
+    CONFIG.game_width  = CONFIG.base_width
+    CONFIG.game_height = CONFIG.base_height
+
+    -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
+end
+
+local function init_game()
+    -- Load map file
+    map = sti("assets/maps/test_map.lua")
+    local layer = map:addCustomLayer("Sprites", 4)
+
+    -- Get player spawn position
+    local player_map_obj
+    for k, object in pairs(map.objects) do
+        if object.name == "Player" then
+            player_map_obj = object
+            break
+        end
+    end
+    if not player_map_obj then
+        error("Player spawn position not found in map")
+    end
+
+    -- Create player entity
+    game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
+
+    table.insert(game.entities, game.player)
 end
 
 -- FIXME - create an entity controller class
@@ -73,48 +100,21 @@ end
 -- Main game loop
 function love.load()
     init_window()
-
-    -- Load map file
-    map = sti("assets/maps/test_map.lua")
-    local layer = map:addCustomLayer("Sprites", 4)
-
-    -- Get player spawn position
-    local player_map_obj
-    for k, object in pairs(map.objects) do
-        if object.name == "Player" then
-            player_map_obj = object
-            break
-        end
+    -- Game will be initialized when player starts, or immediately if skip_start_menu is true
+    if CONFIG.skip_start_menu then
+        init_game()
     end
-    if not player_map_obj then
-        error("Player spawn position not found in map")
-    end
-
-    -- Create player entity
-    game.player = Player.new(player_map_obj.x, player_map_obj.y, 48, 48)
-
-    
- 
-
-
-
-
-
-
-    
-
-    table.insert(game.entities, game.player)
-
-
-    
 end
 
 function love.update(dt)
-    -- Update world
-    map:update(dt)
+    -- Only update game when playing
+    if game.state == "playing" then
+        -- Update world
+        map:update(dt)
 
-    update_entities(dt)
-    handle_collisions(dt)
+        update_entities(dt)
+        handle_collisions(dt)
+    end
 end
 
 function love.draw()
@@ -122,9 +122,20 @@ function love.draw()
     love.graphics.setCanvas(game.canvas)
     love.graphics.clear(game.background_color)
 
-    map:draw()
-    draw_entities()
-    debug_helpers.draw()
+    if game.state == "start" then
+        Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
+    elseif game.state == "playing" then
+        map:draw()
+        draw_entities()
+        debug_helpers.draw()
+    elseif game.state == "paused" then
+        -- Draw the game in the background
+        map:draw()
+        draw_entities()
+        debug_helpers.draw()
+        -- Draw pause overlay
+        Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
+    end
 
     -- Switch back to main screen and draw the scaled canvas
     love.graphics.setCanvas()
@@ -132,4 +143,8 @@ function love.draw()
     love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
 
     -- love.graphics.print("Hello World", 0, 0)
+end
+
+function love.keypressed(key)
+    game.state = Menu.handle_input(key, game.state, init_game)
 end

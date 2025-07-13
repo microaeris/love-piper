@@ -1,6 +1,8 @@
 # Build directory
 ./build/*
 
+build/game.js
+
 # Zipped game files
 *.love
 
@@ -13,3 +15,4 @@ bin
 node_modules
 package.json
 package-lock.json
+justfile
