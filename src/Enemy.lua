@@ -47,7 +47,9 @@ function Enemy.new(x, y, enemy_type)
     self.collision_height = enemy_type.height * 0.8
 
     -- Enemy-specific properties
-    self.speed            = enemy_type.speed
+    -- Apply global speed multiplier if active (set by power-ups)
+    local mult            = _G.ENEMY_SPEED_MULT or 1
+    self.speed            = enemy_type.speed * mult
     -- Copy the color table so each enemy has its own instance (avoid shared reference)
     self.color            = { unpack(enemy_type.color) }
     -- Keep a copy of the original color so we can flash red on hit and revert later
@@ -61,7 +63,7 @@ function Enemy.new(x, y, enemy_type)
 
     -- Behavior-specific properties
     self.wobble_time      = 0
-    self.wobble_amplitude = 30
+    self.wobble_amplitude = 30 * mult
     self.wobble_frequency = 3
 
     -- Sprite setup (use player sprite but recolor it)
@@ -92,6 +94,12 @@ function Enemy:update(map, dt)
             -- Restore the original colour when flash period ends
             self.color = { unpack(self.original_color) }
         end
+    end
+
+    -- If a global speed multiplier reset to 1 and we had stored original wobble amplitude, restore it.
+    if self.original_wobble_amplitude and (_G.ENEMY_SPEED_MULT or 1) == 1 then
+        self.wobble_amplitude          = self.original_wobble_amplitude
+        self.original_wobble_amplitude = nil
     end
 
     -- Handle different behaviors

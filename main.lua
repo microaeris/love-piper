@@ -1,44 +1,49 @@
 -- Include Simple Tiled Implementation into project
-local sti = require "lib.Simple-Tiled-Implementation.sti"
+local sti                = require "lib.Simple-Tiled-Implementation.sti"
 
 -- Import local modules
-local Player = require("src.Player")
-local Enemy = require("src.Enemy")
-local EnemySpawner = require("src.EnemySpawner")
+local Player             = require("src.Player")
+local EnemySpawner       = require("src.EnemySpawner")
 local CollectibleSpawner = require("src.CollectibleSpawner")
-local Camera = require("src.Camera")
-local utils = require("src.utils")
-local debug_helpers = require("src.debug_helpers")
-local Menu = require("src.Menu")
-local SoundManager = require("src.SoundManager")
+local Camera             = require("src.Camera")
+local utils              = require("src.utils")
+local debug_helpers      = require("src.debug_helpers")
+local Menu               = require("src.Menu")
+local SoundManager       = require("src.SoundManager")
+local Collectible        = require("src.Collectible")
+local PowerUp            = require("src.PowerUp")
+local Bullet             = require("src.Bullet")
 
 -- Game configuration
-local CONFIG = {
+local CONFIG             = {
     game_width = 160,
     game_height = 144,
     scale_factor = 5,
-    skip_start_menu = true,           -- Set to true to skip start menu for development
-    allow_debug_gameOver = true,      -- Set to true if want to press '0' to auto-gameOver
-    scroll_speed = 60,                -- Pixels per second horizontal scroll speed (increased from 30)
+    skip_start_menu = true,               -- Set to true to skip start menu for development
+    allow_debug_gameOver = true,          -- Set to true if want to press '0' to auto-gameOver
+    allow_debug_spawn_collectible = true, -- Press '9' to spawn a collectible/power-up for debugging
+    scroll_speed = 60,                    -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
-    enemy_spawn_interval = 2.0,       -- Seconds between enemy spawns
-    enemy_spawn_chance = 0.7,         -- Probability of spawning an enemy each interval
-    max_enemies = 8,                  -- Maximum number of enemies on screen at once
+    enemy_spawn_interval = 2.0,           -- Seconds between enemy spawns
+    enemy_spawn_chance = 0.7,             -- Probability of spawning an enemy each interval
+    max_enemies = 8,                      -- Maximum number of enemies on screen at once
     -- Collectible spawning configuration
-    collectible_spawn_interval = 3.0, -- Seconds between collectible spawns
-    collectible_spawn_chance = 0.6,   -- Probability of spawning a collectible each interval
-    max_collectibles = 12,            -- Maximum number of collectibles on screen at once
+    collectible_spawn_interval = 0.5,     -- Seconds between collectible spawns (was 3.0)
+    collectible_spawn_chance = 1.0,       -- Probability of spawning a collectible each interval (was 0.6)
+    max_collectibles = 25,                -- Maximum number of collectibles on screen at once (was 12)
+    -- Power-up rarity weights (optional): higher number -> more common
+    powerup_weights = { invincibility = 5, slow_enemies = 4, gun = 3, clear_enemies = 1 },
 
     -- UI configuration
     health_text_offset_x = 40, -- Pixels from right edge when drawing health text
 }
 
-local globalGameState = {
+local globalGameState    = {
     highScore = 0
 }
 
 -- Game state variables
-local game = {
+local game               = {
     -- Game settings
     entities = {},
     player = nil,
@@ -46,12 +51,27 @@ local game = {
     camera = nil,
     enemySpawner = nil,
     collectibleSpawner = nil,
+    layerShaderManager = nil,
+    customMapDrawer = nil,
+    activeEffects = {},
+    bulletShootTimer = 0,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
     state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused", "gameOver"
     score = 0,
 }
+
+-- Helper so Bullet can query camera X without circular require
+_G.CONFIG                = CONFIG
+_G.GAME_CAMERA_GET_X     = function()
+    if game and game.camera then
+        local x, _ = game.camera:get_position()
+        return x
+    end
+    return 0
+end
+_G.ENEMY_SPEED_MULT      = 1
 
 -- Helpers
 local function init_window()
@@ -113,7 +133,8 @@ local function init_game()
         game_width = CONFIG.game_width,
         game_height = CONFIG.game_height,
         spawn_margin_y = math.floor(CONFIG.game_height * 0.05),
-        spawn_offset_x = math.floor(CONFIG.game_width * 0.08)
+        spawn_offset_x = math.floor(CONFIG.game_width * 0.08),
+        powerup_weights = CONFIG.powerup_weights,
     }
     game.collectibleSpawner = CollectibleSpawner.new(collectible_config)
 
@@ -121,6 +142,8 @@ local function init_game()
     table.insert(game.entities, game.player)
     -- Reset score
     game.score = 0
+    -- Clear any lingering timed effects
+    game.activeEffects = {}
 end
 
 -- FIXME - create an entity controller class
@@ -140,10 +163,29 @@ end
 
 local function handle_collisions(dt)
     for i, entity in ipairs(game.entities) do
+        -- Bullet vs Enemy collisions
+        if entity.is_bullet and entity.active then
+            for _, target in ipairs(game.entities) do
+                if target.enemy_type and target.active and entity:collidesWith(target) then
+                    target.active = false
+                    entity.active = false
+                    -- Award points for defeating an enemy
+                    game.score = game.score + 2
+                    break
+                end
+            end
+        end
+
         if entity ~= game.player and game.player:collidesWith(entity) then
             if entity.collectible_type then
                 -- Collect the item and increment score
                 game.score = game.score + (entity.value or 1)
+
+                -- Apply collectible-specific effects (e.g., power-ups)
+                if entity.applyEffect then
+                    entity:applyEffect(game)
+                end
+
                 entity.active = false
             else
                 -- Enemy collision feedback
@@ -209,6 +251,46 @@ function love.update(dt)
         game.collectibleSpawner:update(dt, game.entities, cam_x)
 
         update_entities(dt)
+
+        -- Auto-shoot bullets while gun power is active
+        if game.player.has_gun then
+            local shootInterval = 0.25
+            game.bulletShootTimer = game.bulletShootTimer + dt
+            if game.bulletShootTimer >= shootInterval then
+                game.bulletShootTimer = game.bulletShootTimer - shootInterval
+
+                local bullet_x = game.player.x + game.player.width / 2 + 2
+                local bullet_y = game.player.y
+                local bullet = Bullet.new(bullet_x, bullet_y, 1)
+                table.insert(game.entities, bullet)
+            end
+        else
+            game.bulletShootTimer = 0
+        end
+
+        -- Tick active timed effects (power-ups etc.)
+        for i = #game.activeEffects, 1, -1 do
+            local eff = game.activeEffects[i]
+            eff.remaining = eff.remaining - dt
+            if eff.remaining <= 0 then
+                if eff.type == "slow_enemies" then
+                    local mul = eff.multiplier or 0.5
+                    for _, entity in ipairs(game.entities) do
+                        if entity.enemy_type then
+                            if entity.original_speed then
+                                entity.speed = entity.original_speed
+                                entity.original_speed = nil
+                            end
+                        end
+                    end
+                    _G.ENEMY_SPEED_MULT = 1
+                elseif eff.type == "gun" then
+                    if game.player then game.player.has_gun = false end
+                end
+                table.remove(game.activeEffects, i)
+            end
+        end
+
         handle_collisions(dt)
 
         -- If player moves off-screen, inflict damage (once) and respawn near center of current view.
@@ -312,6 +394,21 @@ end
 
 function love.keypressed(key)
     -- DEBUG
+    if game.state == "playing" and key == "9" and CONFIG.allow_debug_spawn_collectible then
+        local spawn_x = game.player.x + game.player.width * 2
+        local spawn_y = game.player.y
+
+        local collectible
+        if math.random() < 0.5 then
+            local ptype = PowerUp.getRandomType()
+            collectible = PowerUp.new(spawn_x, spawn_y, ptype)
+        else
+            collectible = Collectible.new(spawn_x, spawn_y, 1)
+        end
+
+        table.insert(game.entities, collectible)
+        return -- Don't propagate further
+    end
     if game.state == "playing" and key == "0" and CONFIG.allow_debug_gameOver then
         transition_to_gameOver_if_needed(true)
         return
