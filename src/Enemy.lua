@@ -1,12 +1,19 @@
 -- Enemy class that extends Entity
-local Entity = require("src.Entity")
-local Sprite = require("src.Sprite")
-local utils = require("src.utils")
+local Entity                   = require("src.Entity")
+local Sprite                   = require("src.Sprite")
+local utils                    = require("src.utils")
 
-local Enemy = Entity:extend()
+-- Constants
+local COLLISION_WIDTH_SCALE    = 0.65 -- Collision hitbox width relative to sprite width
+local COLLISION_HEIGHT_SCALE   = 0.8 -- Collision hitbox height relative to sprite height
+local WOBBLE_DEFAULT_AMPLITUDE = 30  -- Base amplitude (pixels) for wobble movement
+local WOBBLE_DEFAULT_FREQUENCY = 3   -- Wobbles per second
+local PIXEL_ALIGN_OFFSET       = 0.5 -- Offset used when rounding positions for crisp pixels
+
+local Enemy                    = Entity:extend()
 
 -- Enemy types with different behaviors
-local ENEMY_TYPES = {
+local ENEMY_TYPES              = {
     {
         name = "basic",
         speed = 30,
@@ -43,8 +50,8 @@ function Enemy.new(x, y, enemy_type)
     setmetatable(self, Enemy)
 
     -- Narrow collision box so player can squeeze between spaced enemies
-    self.collision_width  = enemy_type.width * 0.65 -- slimmer
-    self.collision_height = enemy_type.height * 0.8
+    self.collision_width  = enemy_type.width * COLLISION_WIDTH_SCALE -- slimmer
+    self.collision_height = enemy_type.height * COLLISION_HEIGHT_SCALE
 
     -- Enemy-specific properties
     -- Apply global speed multiplier if active (set by power-ups)
@@ -63,8 +70,8 @@ function Enemy.new(x, y, enemy_type)
 
     -- Behavior-specific properties
     self.wobble_time      = 0
-    self.wobble_amplitude = 30 * mult
-    self.wobble_frequency = 3
+    self.wobble_amplitude = WOBBLE_DEFAULT_AMPLITUDE * mult
+    self.wobble_frequency = WOBBLE_DEFAULT_FREQUENCY
 
     -- Sprite setup (use player sprite but recolor it)
     self.sprite           = Sprite.new('assets/images/sprites/player_sheet.png', 16, 16)
@@ -135,8 +142,8 @@ function Enemy:draw()
     if not self.active then return end
 
     -- Centre-on-pivot, then snap to pixel grid
-    local sprite_x = math.floor(self.x - self.width / 2 + 0.5)
-    local sprite_y = math.floor(self.y - self.height / 2 + 0.5)
+    local sprite_x = math.floor(self.x - self.width / 2 + PIXEL_ALIGN_OFFSET)
+    local sprite_y = math.floor(self.y - self.height / 2 + PIXEL_ALIGN_OFFSET)
 
     -- Apply color tinting based on enemy type
     love.graphics.setColor(self.color)
