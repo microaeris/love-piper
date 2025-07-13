@@ -13,4 +13,4 @@ butler() {
     fi
 }
 
-butler push build microaeris/love2d-piper:latest
+butler push build microaeris/love2d-piper:html5

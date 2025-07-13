@@ -7,15 +7,17 @@ rm -rf game.love
 mkdir -p $BUILD_DIR
 
 zip -9 -r game.love . \
-    # Excluded directories
     -x "./$BUILD_DIR/*" \
     "./.git/*" \
     "./.cursor/*" \
+    "./docs/*" \
+    "./asset-source/*" \
     "*.sh" \
     "*.md" \
     "*.love" \
+    "*.DS_Store" \
     ".gitignore"
 
 # If you see the error "Range consisting of offset and length are out of
 # bounds", increase the memory limit (-m argument)
-love.js game.love $BUILD_DIR -t Piper -c -m 67108864
+love.js game.love $BUILD_DIR -t Piper -c
