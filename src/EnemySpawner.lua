@@ -1,21 +1,27 @@
 -- EnemySpawner class for managing enemy spawning
-local Enemy = require("src.Enemy")
-local debug_helpers = require("src.debug_helpers")
-local spawn_patterns = require("src.spawn_patterns")
+local Enemy                   = require("src.Enemy")
+local debug_helpers           = require("src.debug_helpers")
+local spawn_patterns          = require("src.spawn_patterns")
 
-local EnemySpawner = {}
-EnemySpawner.__index = EnemySpawner
+-- Constants ------------------------------------------------------------------------------
+local DEFAULT_SPAWN_INTERVAL  = 2.0 -- Seconds between spawn checks
+local DEFAULT_SPAWN_CHANCE    = 0.7 -- Probability of spawning each interval
+local DEFAULT_MAX_ENEMIES     = 8   -- Maximum number of active enemies
+local DEFAULT_PATTERN_SPACING = 24  -- Default spacing between enemies inside a pattern
+
+local EnemySpawner            = {}
+EnemySpawner.__index          = EnemySpawner
 
 -- Constructor for creating a new enemy spawner
 function EnemySpawner.new(config)
-    local self = setmetatable({}, EnemySpawner)
+    local self          = setmetatable({}, EnemySpawner)
 
     -- Configuration
-    self.spawn_interval = config.enemy_spawn_interval or 2.0
-    self.spawn_chance = config.enemy_spawn_chance or 0.7
-    self.max_enemies = config.max_enemies or 8
-    self.game_width = config.game_width
-    self.game_height = config.game_height
+    self.spawn_interval = config.enemy_spawn_interval or DEFAULT_SPAWN_INTERVAL
+    self.spawn_chance   = config.enemy_spawn_chance or DEFAULT_SPAWN_CHANCE
+    self.max_enemies    = config.max_enemies or DEFAULT_MAX_ENEMIES
+    self.game_width     = config.game_width
+    self.game_height    = config.game_height
     -- No pattern configuration here; handled entirely by spawn_patterns.lua
     -- Offsets and margins (must be provided by config)
     assert(config.spawn_margin_y, "spawn_margin_y must be provided in spawner config")
@@ -76,7 +82,7 @@ function EnemySpawner:spawnPattern(pattern_name, pattern_def, entities, camera_x
     local base_x     = cam_x + self.game_width + self.spawn_offset_x
 
     local wave_size  = pattern_def.wave_size or 1
-    local spacing    = pattern_def.spacing or 24
+    local spacing    = pattern_def.spacing or DEFAULT_PATTERN_SPACING
     local pattern_fn = pattern_def.offsets
 
     local wave_enemy_template
