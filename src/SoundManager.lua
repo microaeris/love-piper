@@ -2,10 +2,10 @@ local SoundManager = {}
 SoundManager.__index = SoundManager
 
 -- Constants ------------------------------------------------------------------------------
-local DEFAULT_MUSIC_VOLUME = 0.1
-local DEFAULT_JINGLE_VOLUME = 0.1
-local DEFAULT_AMBIENCE_VOLUME = 0.1
-local DEFAULT_SFX_VOLUME = 0.2
+local DEFAULT_MUSIC_VOLUME = 0.7
+local DEFAULT_JINGLE_VOLUME = 0.7
+local DEFAULT_AMBIENCE_VOLUME = 0.5
+local DEFAULT_SFX_VOLUME = 0.8
 
 function SoundManager.new()
 	local self = setmetatable({}, SoundManager)
