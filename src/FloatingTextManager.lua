@@ -16,7 +16,7 @@ local DEFAULT_COLOR         = { 1, 1, 1 } -- white
 
 local FONT_PATH             = "assets/fonts/PixelOperatorMono8.ttf"
 local FONT_SIZE             = 4
-local SMALL_FONT            = love.graphics.newFont(FONT_PATH, FONT_SIZE)
+local SMALL_FONT            = love.graphics.newFont(FONT_PATH, FONT_SIZE, 'mono')
 SMALL_FONT:setFilter("nearest", "nearest")
 
 -- Constructor -----------------------------------------------------------------------------
