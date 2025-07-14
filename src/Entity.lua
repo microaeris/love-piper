@@ -19,32 +19,43 @@ function Entity:getFootTilePosition()
 end
 
 function Entity:tryMove(map, dx, dy, dt)
-    -- Treat dx and dy as *displacements* that have already incorporated speed and dt.
-    -- Calculate the prospective new top-left position.
-    local next_x_top_left = self.x + dx
-    local next_y_top_left = self.y + dy
+    -- New centre-based collision calculations ---------------------------------
+    -- Displacement (already incorporates speed*dt) applied to the entity's
+    -- current centre position.
+    local next_x           = self.x + dx
+    local next_y           = self.y + dy
 
-    local next_x_top_right = next_x_top_left + self.width
-    local next_y_top_right = next_y_top_left
+    -- Use the logical collision box which can be smaller than the visual sprite.
+    local half_w           = (self.collision_width or self.width) * 0.5
+    local half_h           = (self.collision_height or self.height) * 0.5
 
-    local next_x_bottom_left = next_x_top_left
-    local next_y_bottom_left = next_y_top_left + self.height
+    -- Foot offset is measured from the top of the sprite. Since we operate with
+    -- a centre-based coordinate, the sprite's top edge sits at (centreY - height/2).
+    local sprite_top_y     = next_y - self.height * 0.5
+    local foot_y           = sprite_top_y + (self.foot_offset or 0)
 
-    local next_x_bottom_right = next_x_top_right
-    local next_y_bottom_right = next_y_bottom_left
+    -- Corner/foot positions we need to test for walkability -------------------
+    local top_left_foot_x  = next_x - half_w
+    local top_left_foot_y  = foot_y
 
-    -- Use foot position for collision detection
-    local next_x_top_left_foot = next_x_top_left
-    local next_y_top_left_foot = next_y_top_left + self.foot_offset
+    local top_right_foot_x = next_x + half_w
+    local top_right_foot_y = foot_y
 
-    local next_x_top_right_foot = next_x_top_right
-    local next_y_top_right_foot = next_y_top_right + self.foot_offset
+    -- Horizontal hitbox is narrow (half_w), but vertically we must use the
+    -- sprite's full height so the player cannot visually clip into terrain.
+    local bottom_offset_y  = self.height * 0.5  -- full sprite bottom
 
-    if utils.is_walkable(map, next_x_top_left_foot, next_y_top_left_foot) and
-        utils.is_walkable(map, next_x_top_right_foot, next_y_top_right_foot) and
-        utils.is_walkable(map, next_x_bottom_left, next_y_bottom_left) and
-        utils.is_walkable(map, next_x_bottom_right, next_y_bottom_right) then
-        self:setPosition(next_x_top_left, next_y_top_left)
+    local bottom_left_x    = next_x - half_w
+    local bottom_left_y    = next_y + bottom_offset_y
+
+    local bottom_right_x   = next_x + half_w
+    local bottom_right_y   = bottom_left_y
+
+    if utils.is_walkable(map, top_left_foot_x, top_left_foot_y) and
+        utils.is_walkable(map, top_right_foot_x, top_right_foot_y) and
+        utils.is_walkable(map, bottom_left_x, bottom_left_y) and
+        utils.is_walkable(map, bottom_right_x, bottom_right_y) then
+        self:setPosition(next_x, next_y)
         return true
     end
     return false
