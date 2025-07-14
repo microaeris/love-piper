@@ -3,10 +3,12 @@ local Menu = {}
 -- Menu drawing functions
 function Menu.draw_start_menu(game_width, game_height)
     love.graphics.setColor(1, 1, 1, 1)
-    local font = love.graphics.getFont()
+    local prevFont = love.graphics.getFont()
+    local font = _G.UI_MENU_FONT or prevFont
+    love.graphics.setFont(font)
 
     -- Title
-    local title = "LOVE PIPER"
+    local title = "APOCALYPSE DUCK"
     local title_width = font:getWidth(title)
     love.graphics.print(title, (game_width - title_width) / 2, game_height / 2 - 30)
 
@@ -14,6 +16,9 @@ function Menu.draw_start_menu(game_width, game_height)
     local instruction = "Press ENTER to start"
     local instruction_width = font:getWidth(instruction)
     love.graphics.print(instruction, (game_width - instruction_width) / 2, game_height / 2 + 10)
+
+    -- Restore previous font
+    love.graphics.setFont(prevFont)
 end
 
 function Menu.draw_pause_menu(game_width, game_height)
@@ -23,7 +28,9 @@ function Menu.draw_pause_menu(game_width, game_height)
 
     -- Draw pause text
     love.graphics.setColor(1, 1, 1, 1)
-    local font = love.graphics.getFont()
+    local prevFont = love.graphics.getFont()
+    local font = _G.UI_MENU_FONT or prevFont
+    love.graphics.setFont(font)
 
     local pause_text = "PAUSED"
     local pause_width = font:getWidth(pause_text)
@@ -32,11 +39,16 @@ function Menu.draw_pause_menu(game_width, game_height)
     local instruction = "Press ESC to resume"
     local instruction_width = font:getWidth(instruction)
     love.graphics.print(instruction, (game_width - instruction_width) / 2, game_height / 2 + 10)
+
+    -- Restore previous font
+    love.graphics.setFont(prevFont)
 end
 
 function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
     love.graphics.setColor(1, 1, 1, 1)
-    local font = love.graphics.getFont()
+    local prevFont = love.graphics.getFont()
+    local font = _G.UI_MENU_FONT or prevFont
+    love.graphics.setFont(font)
 
     -- Title
     local title = "GAME OVER"
@@ -54,9 +66,9 @@ function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
     -- Score #
     local scoreText = tostring(score)
     local score_width = font:getWidth(score)
-    love.graphics.print(scoreText, (game_width - score_width) / 2, game_height / 2  -15)
+    love.graphics.print(scoreText, (game_width - score_width) / 2, game_height / 2 - 15)
 
-        -- "High Score"
+    -- "High Score"
     local high_score = "HIGH SCORE"
     local high_score_width = font:getWidth(high_score)
     love.graphics.print(high_score, (game_width - high_score_width) / 2, game_height / 2 + 10)
@@ -70,6 +82,9 @@ function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
     local pressEnter = "Press ENTER to try again"
     local press_enter_width = font:getWidth(pressEnter)
     love.graphics.print(pressEnter, (game_width - press_enter_width) / 2, game_height / 2 + 50)
+
+    -- Restore previous font
+    love.graphics.setFont(prevFont)
 end
 
 -- Handle menu input and state transitions
