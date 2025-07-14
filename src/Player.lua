@@ -22,6 +22,11 @@ local INDICATOR_OUTLINE_COLOR = { 0, 0, 0, 1 }
 local DASH_INDICATOR_RADIUS   = 3 -- Radius of the dash cooldown indicator
 local DASH_INDICATOR_Y_OFFSET = 6 -- Vertical offset (in pixels) for dash indicator above sprite
 
+-- Ghost trail constants (avoid magic numbers)
+local GHOST_SPAWN_INTERVAL    = 0.03 -- seconds between ghost spawns during dash
+local GHOST_LIFETIME          = 0.25 -- seconds a ghost persists
+local GHOST_START_ALPHA       = 0.7 -- starting alpha value for a ghost
+
 local Player                  = Entity:extend()
 
 -- Constructor for creating a new player
@@ -51,6 +56,10 @@ function Player.new(x, y, width, height)
     self.dash_timer          = 0
     self.dash_cooldown_timer = 0
     self.has_dashed          = false
+
+    -- Ghost trail state
+    self.ghosts              = {} -- active ghost sprites
+    self.ghost_spawn_timer   = 0  -- accumulator for spawn cadence
 
     -- Collision box narrower than sprite for smoother navigation
     self.collision_width     = width * HITBOX_SCALE  -- narrower hitbox
@@ -164,6 +173,13 @@ function Player:update(map, dt)
             self.dash_cooldown_timer = DASH_COOLDOWN
             self:setVelocity(0, 0)
         end
+
+        -- Spawn ghosts while dashing
+        self.ghost_spawn_timer = self.ghost_spawn_timer + dt
+        while self.ghost_spawn_timer >= GHOST_SPAWN_INTERVAL do
+            self:spawnGhost()
+            self.ghost_spawn_timer = self.ghost_spawn_timer - GHOST_SPAWN_INTERVAL
+        end
     end
 
     -- Handle invincibility timers and blinking
@@ -185,6 +201,15 @@ function Player:update(map, dt)
         return
     end
 
+    -- Update existing ghosts (fade & cull)
+    for i = #self.ghosts, 1, -1 do
+        local g = self.ghosts[i]
+        g.life = g.life - dt
+        if g.life <= 0 then
+            table.remove(self.ghosts, i)
+        end
+    end
+
     -- Update animation
     if self.animation then
         self.animation:update(dt)
@@ -198,6 +223,9 @@ function Player:draw()
     if self.invincible and not self.visible then
         return -- skip drawing to create blinking effect
     end
+
+    -- Draw ghost trail behind the player
+    self:drawGhostTrail()
 
     -- centre-on-pivot, then snap to pixel grid
     local sprite_x = math.floor(self.x - self.width / 2 + PIXEL_ALIGN_OFFSET)
@@ -249,6 +277,38 @@ function Player:drawDashIndicator()
     love.graphics.setColor(INDICATOR_OUTLINE_COLOR)
     love.graphics.circle("line", ind_x, ind_y, indicator_radius)
 
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- Helper to spawn a single ghost sprite at the player’s current frame
+function Player:spawnGhost()
+    local sprite_x = math.floor(self.x - self.width / 2 + PIXEL_ALIGN_OFFSET)
+    local sprite_y = math.floor(self.y - self.height / 2 + PIXEL_ALIGN_OFFSET)
+
+    -- Determine current frame quad
+    local current_frame
+    if self.animation and self.animation.frames then
+        current_frame = self.animation.frames[self.animation.position]
+    else
+        current_frame = self.sprite:getFrame(1, 1)
+    end
+
+    table.insert(self.ghosts, {
+        x     = sprite_x,
+        y     = sprite_y,
+        frame = current_frame,
+        life  = GHOST_LIFETIME
+    })
+end
+
+-- Draw all active ghost sprites
+function Player:drawGhostTrail()
+    for _, g in ipairs(self.ghosts) do
+        local alpha = (g.life / GHOST_LIFETIME) * GHOST_START_ALPHA
+        love.graphics.setColor(1, 1, 1, alpha)
+        love.graphics.draw(self.sprite.image, g.frame, g.x, g.y)
+    end
+    -- Restore default color
     love.graphics.setColor(1, 1, 1, 1)
 end
 

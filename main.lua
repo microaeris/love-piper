@@ -1,21 +1,22 @@
 -- Include Simple Tiled Implementation into project
-local sti                = require "lib.Simple-Tiled-Implementation.sti"
+local sti                 = require "lib.Simple-Tiled-Implementation.sti"
 
 -- Import local modules
-local Player             = require("src.Player")
-local EnemySpawner       = require("src.EnemySpawner")
-local CollectibleSpawner = require("src.CollectibleSpawner")
-local Camera             = require("src.Camera")
-local utils              = require("src.utils")
-local debug_helpers      = require("src.debug_helpers")
-local Menu               = require("src.Menu")
-local SoundManager       = require("src.SoundManager")
-local Collectible        = require("src.Collectible")
-local PowerUp            = require("src.PowerUp")
-local Bullet             = require("src.Bullet")
+local Player              = require("src.Player")
+local EnemySpawner        = require("src.EnemySpawner")
+local CollectibleSpawner  = require("src.CollectibleSpawner")
+local Camera              = require("src.Camera")
+local utils               = require("src.utils")
+local debug_helpers       = require("src.debug_helpers")
+local Menu                = require("src.Menu")
+local SoundManager        = require("src.SoundManager")
+local Collectible         = require("src.Collectible")
+local PowerUp             = require("src.PowerUp")
+local Bullet              = require("src.Bullet")
+local FloatingTextManager = require("src.FloatingTextManager")
 
 -- Game configuration
-local CONFIG             = {
+local CONFIG              = {
     game_width = 160,
     game_height = 144,
     scale_factor = 5,
@@ -36,12 +37,12 @@ local CONFIG             = {
     health_text_offset_x = 40, -- Pixels from right edge when drawing health text
 }
 
-local globalGameState    = {
+local globalGameState     = {
     highScore = 0
 }
 
 -- Game state variables
-local game               = {
+local game                = {
     -- Game settings
     entities = {},
     player = nil,
@@ -61,18 +62,22 @@ local game               = {
 }
 
 -- Helper so Bullet can query camera X without circular require
-_G.CONFIG                = CONFIG
-_G.GAME_CAMERA_GET_X     = function()
+_G.CONFIG                 = CONFIG
+_G.GAME_CAMERA_GET_X      = function()
     if game and game.camera then
         local x, _ = game.camera:get_position()
         return x
     end
     return 0
 end
-_G.ENEMY_SPEED_MULT      = 1
+_G.ENEMY_SPEED_MULT       = 1
 
 -- Helpers
 local function init_window()
+    local font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 4)
+    font:setFilter("nearest", "nearest")
+    love.graphics.setFont(font)
+
     -- Set default filter to nearest
     love.graphics.setDefaultFilter("nearest", "nearest")
 
@@ -151,6 +156,8 @@ local function init_game()
 
     -- Reset score
     game.score = 0
+    -- Initialize floating combat text manager
+    game.floatingTextManager = FloatingTextManager.new()
     -- Clear any lingering timed effects
     game.activeEffects = {}
 end
@@ -180,6 +187,9 @@ local function handle_collisions(dt)
                     entity.active = false
                     -- Award points for defeating an enemy
                     game.score = game.score + 2
+                    if game.floatingTextManager then
+                        game.floatingTextManager:add("+2", target.x, target.y - (target.height or 8))
+                    end
                     break
                 end
             end
@@ -189,6 +199,11 @@ local function handle_collisions(dt)
             if entity.collectible_type then
                 -- Collect the item and increment score
                 game.score = game.score + entity.value
+                if game.floatingTextManager then
+                    -- Spawn above the player’s head for collectibles
+                    game.floatingTextManager:add("+" .. tostring(entity.value), game.player.x,
+                        game.player.y - game.player.height)
+                end
 
                 -- Apply collectible-specific effects (e.g., power-ups)
                 if entity.applyEffect then
@@ -271,6 +286,11 @@ function love.update(dt)
         game.collectibleSpawner:update(dt, game.entities, cam_x, map)
 
         update_entities(dt)
+
+        -- Update floating combat text
+        if game.floatingTextManager then
+            game.floatingTextManager:update(dt)
+        end
 
         -- Auto-shoot bullets while gun power is active
         if game.player.has_gun then
@@ -428,9 +448,11 @@ function love.draw()
         local cam_x, cam_y = game.camera:get_position()
         love.graphics.translate(-cam_x, -cam_y)
         draw_entities()
+        -- Draw floating combat text (world space, inside camera transform)
+        if game.floatingTextManager then
+            game.floatingTextManager:draw()
+        end
         love.graphics.pop()
-
-
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
