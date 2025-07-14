@@ -59,11 +59,11 @@
             "scaleInDock": 5.5
         },
         "water.tmx": {
-            "scale": 4.0359,
+            "scale": 3.2425,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 94.89828786639907,
-                "y": 60.95294729800045
+                "x": 115.65150346954509,
+                "y": 71.5497301464919
             }
         },
         "water.tmx#Water": {

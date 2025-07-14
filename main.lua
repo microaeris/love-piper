@@ -57,6 +57,7 @@ local game               = {
     bulletShootTimer = 0,
     -- Canvas settings for scaled rendering
     canvas = nil,
+    shaderCanvas = nil,
     -- Game state management
     state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused", "gameOver"
     score = 0,
@@ -82,6 +83,8 @@ local function init_window()
     -- game.canvas = love.graphics.newCanvas(window_width, window_height)
     game.canvas = love.graphics.newCanvas(CONFIG.game_width, CONFIG.game_height)
     game.canvas:setFilter("nearest", "nearest")
+
+    game.shaderCanvas = love.graphics.newCanvas(CONFIG.game_width, CONFIG.game_height)
 
     -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
 end
@@ -143,9 +146,10 @@ local function init_game()
     game.entities = {}
     table.insert(game.entities, game.player)
 
-    -- Initate the shaderes
+    -- Initate the shaders
     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
+    caustics_shader = love.graphics.newShader("assets/shaders/water_caustics.glsl")
 
     -- Reset score
     game.score = 0
@@ -355,18 +359,44 @@ function love.draw()
     if game.state == "start" then
         Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "playing" then
-        love.graphics.setShader(ripple_shader)
-        love.graphics.push()
-        game.camera:draw_scrolling_map(water_map)
-        love.graphics.pop()
-        love.graphics.setShader()
+        -- love.graphics.setCanvas(game.shaderCanvas)
+        -- love.graphics.clear()
+        -- love.graphics.setShader(ripple_shader)
+        -- ripple_shader:send("time", love.timer.getTime())
+        -- ripple_shader:send("iResolution", {CONFIG.game_width, CONFIG.game_height})
+        -- -- love.graphics.push()
+        -- game.camera:draw_scrolling_map(water_map)
+        -- -- love.graphics.pop()
+        -- love.graphics.setShader()
+        -- love.graphics.setCanvas()
+        -- love.graphics.draw(gmyCanvas, 0, 0)
 
-        -- Draw scrolling background (map)
-        love.graphics.setShader(lighting_shader)
-        love.graphics.push()
-        game.camera:draw_scrolling_map(map)
-        love.graphics.pop()
+        ------------------------------------------
+
+        -- Draw water_map with ripple shader
+        -- love.graphics.setCanvas(game.shaderCanvas)
+        -- love.graphics.clear()
+        love.graphics.setShader(ripple_shader)
+        ripple_shader:send("time", love.timer.getTime())
+        ripple_shader:send("iResolution", {CONFIG.game_width, CONFIG.game_height})
+        game.camera:draw_scrolling_map(water_map)
         love.graphics.setShader()
+        -- love.graphics.setCanvas()
+
+        -- Draw the water canvas
+        love.graphics.draw(game.shaderCanvas, 0, 0)
+
+        -- Draw regular map without shader
+        game.camera:draw_scrolling_map(map)
+
+        -- Draw entities with camera transform
+        love.graphics.push()
+        local cam_x, cam_y = game.camera:get_position()
+        love.graphics.translate(-cam_x, -cam_y)
+        draw_entities()
+        love.graphics.pop()
+
+        ------------------------------------------
 
         -- Draw entities with camera transform
         love.graphics.push()
@@ -377,10 +407,12 @@ function love.draw()
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
+
         -- Draw score
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print("Score: " .. tostring(game.score), 10, 10)
         love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
+
     elseif game.state == "paused" then
         -- Draw the game world in the background
         game.camera:draw_scrolling_map(map)
