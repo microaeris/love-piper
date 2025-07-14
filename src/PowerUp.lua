@@ -83,6 +83,10 @@ EFFECT_HANDLERS.clear_enemies = function(game, pu)
         if entity.enemy_type and entity.active then
             entity.active = false
             game.score = game.score + CLEAR_ENEMY_SCORE -- points per enemy cleared
+            if game.floatingTextManager then
+                game.floatingTextManager:add("+" .. tostring(CLEAR_ENEMY_SCORE), entity.x,
+                entity.y - (entity.height or 8))
+            end
         end
     end
 end
