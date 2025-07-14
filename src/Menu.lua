@@ -59,7 +59,7 @@ function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
     -- Title
     local title = "GAME OVER"
     local title_width = font:getWidth(title)
-    love.graphics.print(title, (game_width - title_width) / 2, y)
+    love.graphics.print(title, (game_width - title_width) / 2, y - 30)
 
     -- Next line
     y = y + spacing
@@ -98,7 +98,7 @@ function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
 
     local pressEnter = "Press ENTER to try again"
     local press_enter_width = font:getWidth(pressEnter)
-    love.graphics.print(pressEnter, (game_width - press_enter_width) / 2, y)
+    love.graphics.print(pressEnter, (game_width - press_enter_width) / 2, y + 15)
 
     -- Restore previous font
     love.graphics.setFont(prevFont)
