@@ -125,7 +125,9 @@ function PowerUp.new(x, y, power_type, value, duration)
 
     -- Sprite / visual setup -------------------------------------------------------------
     -- Lazily create the shared sprite sheet once
-    if not PowerUp._spriteSheet then
+    -- Use rawget to avoid inheriting Collectible._spriteSheet via metatables
+    -- This ensures PowerUp gets its own dedicated sprite sheet.
+    if not rawget(PowerUp, "_spriteSheet") then
         PowerUp._spriteSheet = Sprite.new(POWERUP_SPRITE_PATH, SPRITE_FRAME_SIZE, SPRITE_FRAME_SIZE)
     end
 
