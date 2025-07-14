@@ -3,8 +3,7 @@ uniform float time;
 uniform float wave_height;
 uniform float wave_speed;
 uniform float wave_freq;
-extern vec2 iResolution;
-
+uniform vec2 iResolution;
 
 // CC0 license https://creativecommons.org/share-your-work/public-domain/cc0/
 
@@ -179,14 +178,23 @@ vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
     uv.y +=
         sin((uv.x + time * wave_speed) * wave_freq)
         * cos((uv.x + time * wave_speed) * wave_freq * 0.9)
-        * wave_height * 0.9;
+        * wave_height * 1.2;
 
     vec4 pixel = Texel(tex, uv);
     // apply a blue tint to the reflection
     // pixel.b += 0.5;
 
-    if (value > 0.5) {
-        return vec4(.55, .89, .62, 1.0) * .99;
+    if (value > 0.2) {
+
+        vec4 col = vec4(blendMultiply(origin.rgb, 0.05 * col, 0.01), 1.0);
+        float avg_color = (col.r + col.g + col.b) / 3.0;
+        if (avg_color < 0.3) { // if the black stuff, makr it the brighter color.
+            return vec4(.55, .89, .62, 1.0) * 1.05;
+        } else {
+            return col;
+        }
+        // return pixel + (value * 1.5);
+        // return vec4(.55, .89, .62, 1.0) * .99;
     } else {
         return pixel;
     }

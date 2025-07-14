@@ -42,5 +42,8 @@
 	"local-lua-debugger-vscode.executable": {
 		"command": "love",
 		"args": ["${workspaceFolder}"]
-	}
+    },
+    "files.associations": {
+        "*.glsl": "cpp"
+    }
 }
