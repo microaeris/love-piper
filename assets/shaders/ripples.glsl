@@ -44,9 +44,9 @@ vec4 os2NoiseWithDerivativesPart(vec3 X) {
 
     // Pick between each pair of oppposite corners in the cube.
     vec3 v1 = b + floor(dot(i4, vec4(.25)));
-    vec3 v2 = b + vec3(1, 0, 0) + vec3(-1, 1, 1) * floor(dot(i4, vec4(-.25, .25, .25, .35)));
-    vec3 v3 = b + vec3(0, 1, 0) + vec3(1, -1, 1) * floor(dot(i4, vec4(.25, -.25, .25, .35)));
-    vec3 v4 = b + vec3(0, 0, 1) + vec3(1, 1, -1) * floor(dot(i4, vec4(.25, .25, -.25, .35)));
+    vec3 v2 = b + vec3(1.0, 0.0, 0.0) + vec3(-1.0, 1.0, 1.0) * floor(dot(i4, vec4(-.25, .25, .25, .35)));
+    vec3 v3 = b + vec3(0.0, 1.0, 0.0) + vec3(1.0, -1.0, 1.0) * floor(dot(i4, vec4(.25, -.25, .25, .35)));
+    vec3 v4 = b + vec3(0.0, 0.0, 1.0) + vec3(1.0, 1.0, -1.0) * floor(dot(i4, vec4(.25, .25, -.25, .35)));
 
     // Gradient hashes for the four vertices in this half-lattice.
     vec4 hashes = permute(mod(vec4(v1.x, v2.x, v3.x, v4.x), 289.0));
@@ -114,7 +114,7 @@ vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
 {
     // Normalized pixel coordinates (from 0 to 1 on largest axis)
     vec2 uv = screenCoord / vec2(iResolution.x, iResolution.y) * 4.0;
-    uv.x += time * 4;
+    uv.x += time * 4.0;
 
     // Initial input point
     vec3 X = vec3(uv, mod(time / 8.0, 578.0) * 0.8660254037844386);
