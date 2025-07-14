@@ -16,31 +16,25 @@ vec4 permute(vec4 t) {
 }
 
 // Gradient set is a normalized expanded rhombic dodecahedron
-vec3 grad(float hash) {
-
-    // Random vertex of a cube, +/- 1 each
-    vec3 cube = mod(floor(hash / vec3(1.0, 2.0, 4.0)), 2.0) * 2.0 - 1.0;
-
-    // Random edge of the three edges connected to that vertex
-    // Also a cuboctahedral vertex
-    // And corresponds to the face of its dual, the rhombic dodecahedron
+vec3 grad(float hash)
+{
+    vec3 cube  = mod(floor(hash / vec3(1.0, 2.0, 4.0)), 2.0) * 2.0 - 1.0;
     vec3 cuboct = cube;
-    cuboct[int(hash / 16.0)] = 0.0;
 
-    // In a funky way, pick one of the four points on the rhombic face
+    int axis = int(floor(hash / 16.0));   // 0, 1, or 2
+
+    // zero the chosen component without dynamic indexing
+    if      (axis == 0) cuboct.x = 0.0;
+    else if (axis == 1) cuboct.y = 0.0;
+    else                cuboct.z = 0.0;
+
     float type = mod(floor(hash / 8.0), 2.0);
-    vec3 rhomb = (1.0 - type) * cube + type * (cuboct + cross(cube, cuboct));
+    vec3 rhomb = (1.0 - type) * cube +
+                 type * (cuboct + cross(cube, cuboct));
 
-    // Expand it so that the new edges are the same length
-    // as the existing ones
-    vec3 grad = cuboct * 1.22474487139 + rhomb;
-
-    // To make all gradients the same length, we only need to shorten the
-    // second type of vector. We also put in the whole noise scale constant.
-    // The compiler should reduce it into the existing floats. I think.
-    grad *= (1.0 - 0.042942436724648037 * type) * 3.5946317686139184;
-
-    return grad;
+    vec3 gradv = cuboct * 1.22474487139 + rhomb;
+    gradv *= (1.0 - 0.042942436724648037 * type) * 3.5946317686139184;
+    return gradv;
 }
 
 // BCC lattice split up into 2 cube lattices
@@ -68,8 +62,12 @@ vec4 os2NoiseWithDerivativesPart(vec3 X) {
     vec4 extrapolations = vec4(dot(d1, g1), dot(d2, g2), dot(d3, g3), dot(d4, g4));
 
     // Derivatives of the noise
-    vec3 derivative = -8.0 * mat4x3(d1, d2, d3, d4) * (aa * a * extrapolations)
-        + mat4x3(g1, g2, g3, g4) * aaaa;
+    // vec3 derivative = -8.0 * mat4x3(d1, d2, d3, d4) * (aa * a * extrapolations)
+    //     + mat4x3(g1, g2, g3, g4) * aaaa;
+    vec4 k1 = aa * a * extrapolations; // 4 coeffs
+    vec3 derivative =
+        -8.0 * (d1 * k1.x + d2 * k1.y + d3 * k1.z + d4 * k1.w)
+        + (g1 * aaaa.x + g2 * aaaa.y + g3 * aaaa.z + g4 * aaaa.w);
 
     // Return it all as a vec4
     return vec4(derivative, dot(aaaa, extrapolations));
