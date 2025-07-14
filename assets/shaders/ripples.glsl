@@ -9,7 +9,7 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 pixel_coords) {
   // Displace the `x` coordinate. 
   uv.x +=
     sin((uv.y + time * wave_speed) * wave_freq)
-    * cos((uv.y + time * wave_speed) * wave_freq * 0.5)
+    * cos((uv.y + time * wave_speed) * wave_freq * 0.7)
     * wave_height;
 
   // Displacement in `y` is half that of `x`.
@@ -21,7 +21,6 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 pixel_coords) {
 
   vec4 pixel = Texel(texture, uv);
   // apply a blue tint to the reflection
-  // pixel.b += 0.5;
   return pixel;
 }
 
