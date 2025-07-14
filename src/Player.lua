@@ -25,7 +25,7 @@ local DASH_INDICATOR_Y_OFFSET = 6 -- Vertical offset (in pixels) for dash indica
 -- Ghost trail constants (avoid magic numbers)
 local GHOST_SPAWN_INTERVAL    = 0.03 -- seconds between ghost spawns during dash
 local GHOST_LIFETIME          = 0.25 -- seconds a ghost persists
-local GHOST_START_ALPHA       = 0.7 -- starting alpha value for a ghost
+local GHOST_START_ALPHA       = 0.7  -- starting alpha value for a ghost
 
 local Player                  = Entity:extend()
 
@@ -66,16 +66,16 @@ function Player.new(x, y, width, height)
     self.collision_height    = height * HITBOX_SCALE -- shorter hitbox
 
     -- Sprite setup
-    self.sprite              = Sprite.new('assets/images/sprites/player_sheet.png', width, height)
+    self.sprite              = Sprite.new('assets/images/sprites/duck_sheet.png', width, height)
     -- Row one is walk down,
     -- Row two is walk up,
     -- Row three is walk left,
     -- Row four is walk right,
     -- (1,1) is idle.
     self.sprite:addAnimation('walk_down', '1-4,1', 0.1)
-    self.sprite:addAnimation('walk_up', '5-8,1', 0.1)
-    self.sprite:addAnimation('walk_left', '9-12,1', 0.1)
-    self.sprite:addAnimation('walk_right', '13-16,1', 0.1)
+    self.sprite:addAnimation('walk_up', '1-4,2', 0.1)
+    self.sprite:addAnimation('walk_left', '1-4,3', 0.1)
+    self.sprite:addAnimation('walk_right', '1-4,4', 0.1)
     self.sprite:addAnimation('idle', { { 1, 1 } }, 0.1)
     self.current_animation = 'idle'
     self.animation = self.sprite:cloneAnimation('idle')
