@@ -1,5 +1,6 @@
 local Collectible             = require("src.Collectible")
 local utils                   = require("src.utils")
+local Sprite                  = require("src.Sprite")
 
 -- General constants ------------------------------------------------------------------------
 local SLOW_ENEMY_SPEED_MULT   = 0.25 -- Multiplier applied to enemy speed (and wobble) during slow_enemies
@@ -9,6 +10,21 @@ local PROBABILITY_TOTAL       = 100  -- Represents 100% when working with probab
 
 -- PowerUp class that extends Collectible
 local PowerUp                 = Collectible:extend()
+
+-- Sprite sheet setup -------------------------------------------------------------------
+local POWERUP_SPRITE_PATH     = 'assets/images/sprites/powerup_sheet.png'
+local SPRITE_FRAME_SIZE       = 16 -- Each frame is 16x16 on the sheet
+
+-- Map each power-up type to its {column, row} coordinates on the sprite sheet (1-indexed)
+local TYPE_FRAME_COORDS       = {
+    invincibility = { 2, 2 }, -- column 2, row 2
+    slow_enemies  = { 2, 1 }, -- column 2, row 1
+    gun           = { 1, 1 }, -- column 1, row 1
+    clear_enemies = { 1, 2 }, -- column 1, row 2
+}
+
+-- Pixel-perfect alignment offset used elsewhere
+local PIXEL_ALIGN_OFFSET      = 0.5
 
 -- Default per-type durations (seconds) – a duration of 0 means instant and permanent/no expiry
 local DEFAULT_DURATIONS       = {
@@ -85,7 +101,7 @@ EFFECT_HANDLERS.clear_enemies = function(game, pu)
             game.score = game.score + CLEAR_ENEMY_SCORE -- points per enemy cleared
             if game.floatingTextManager then
                 game.floatingTextManager:add("+" .. tostring(CLEAR_ENEMY_SCORE), entity.x,
-                entity.y - (entity.height or 8))
+                    entity.y - (entity.height or 8))
             end
         end
     end
@@ -107,10 +123,31 @@ function PowerUp.new(x, y, power_type, value, duration)
     self.power_type       = power_type or "invincibility"
     self.duration         = duration or DEFAULT_DURATIONS[self.power_type] or 0
 
-    -- Visual: tint based on type so testers can differentiate
-    self.color            = TYPE_COLOURS[self.power_type] or utils.colors.cyan
+    -- Sprite / visual setup -------------------------------------------------------------
+    -- Lazily create the shared sprite sheet once
+    if not PowerUp._spriteSheet then
+        PowerUp._spriteSheet = Sprite.new(POWERUP_SPRITE_PATH, SPRITE_FRAME_SIZE, SPRITE_FRAME_SIZE)
+    end
+
+    self.spriteSheet = PowerUp._spriteSheet
+    self.frameCoords = TYPE_FRAME_COORDS[self.power_type] or { 1, 1 }
+
+    -- Keep the old colour for potential debug overlays but not used for drawing
+    self.color       = TYPE_COLOURS[self.power_type] or utils.colors.cyan
 
     return self
+end
+
+-- Override draw to use sprite frame instead of rectangle ---------------------------------
+function PowerUp:draw()
+    if not self.active then return end
+
+    -- Calculate top-left position for 16×16 sprite so its centre aligns with entity centre
+    local sprite_x = math.floor(self.x - SPRITE_FRAME_SIZE / 2 + PIXEL_ALIGN_OFFSET)
+    local sprite_y = math.floor(self.y - SPRITE_FRAME_SIZE / 2 + PIXEL_ALIGN_OFFSET)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    self.spriteSheet:drawFrame(self.frameCoords[1], self.frameCoords[2], sprite_x, sprite_y)
 end
 
 -- Invoked when the player picks up the power-up ------------------------------------------------

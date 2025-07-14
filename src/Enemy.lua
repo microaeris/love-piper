@@ -14,32 +14,33 @@ local Enemy                    = Entity:extend()
 
 -- Enemy types with different behaviors
 local ENEMY_TYPES              = {
+    -- Each enemy type corresponds to a column in the sprite sheet’s first row
     {
         name = "basic",
         speed = 30,
-        color = utils.colors.blue,
+        frame = 1,
         width = 16,
         height = 16,
         health = 1,
-        behavior = "straight_left"
+        behavior = "straight_left",
     },
     {
         name = "fast",
         speed = 60,
-        color = utils.colors.orange,
+        frame = 2,
         width = 16,
         height = 16,
         health = 1,
-        behavior = "straight_left"
+        behavior = "straight_left",
     },
     {
         name = "wobbler",
         speed = 25,
-        color = utils.colors.purple,
+        frame = 3,
         width = 16,
         height = 16,
         health = 1,
-        behavior = "wobble_left"
+        behavior = "wobble_left",
     }
 }
 
@@ -57,10 +58,9 @@ function Enemy.new(x, y, enemy_type)
     -- Apply global speed multiplier if active (set by power-ups)
     local mult            = _G.ENEMY_SPEED_MULT or 1
     self.speed            = enemy_type.speed * mult
-    -- Copy the color table so each enemy has its own instance (avoid shared reference)
-    self.color            = { unpack(enemy_type.color) }
-    -- Keep a copy of the original color so we can flash red on hit and revert later
-    self.original_color   = { unpack(self.color) }
+    -- Default colour is white (no sprite tint). We still use colour for red hit flashes.
+    self.color            = { 1, 1, 1, 1 }
+    self.original_color   = { 1, 1, 1, 1 }
 
     -- Timer for red flash when hit
     self.hit_timer        = 0
@@ -73,12 +73,11 @@ function Enemy.new(x, y, enemy_type)
     self.wobble_amplitude = WOBBLE_DEFAULT_AMPLITUDE * mult
     self.wobble_frequency = WOBBLE_DEFAULT_FREQUENCY
 
-    -- Sprite setup (use player sprite but recolor it)
-    self.sprite           = Sprite.new('assets/images/sprites/duck_sheet.png', 16, 16)
-    self.sprite:addAnimation('walk_left', '1-4,3', 0.1)
-    self.sprite:addAnimation('idle', { { 1, 1 } }, 0.1)
-    self.current_animation = 'walk_left'
-    self.animation = self.sprite:cloneAnimation('walk_left')
+    -- Sprite setup
+    self.sprite           = Sprite.new('assets/images/sprites/enemy_sheet.png', 16, 16)
+    -- Select the correct frame for this enemy type (column = enemy_type.frame)
+    self.frame_quad       = self.sprite:getFrame(enemy_type.frame or 1, 1)
+    self.animation        = nil -- no animation frames
 
     -- Set initial velocity based on behavior
     if self.behavior == "straight_left" then
@@ -145,14 +144,10 @@ function Enemy:draw()
     local sprite_x = math.floor(self.x - self.width / 2 + PIXEL_ALIGN_OFFSET)
     local sprite_y = math.floor(self.y - self.height / 2 + PIXEL_ALIGN_OFFSET)
 
-    -- Apply color tinting based on enemy type
     love.graphics.setColor(self.color)
 
-    if self.animation then
-        self.animation:draw(self.sprite.image, sprite_x, sprite_y, self.rotation)
-    else
-        self.sprite:drawFrame(1, 1, sprite_x, sprite_y, self.rotation)
-    end
+    -- Draw static frame (no animation)
+    love.graphics.draw(self.sprite.image, self.frame_quad, sprite_x, sprite_y, self.rotation)
 end
 
 -- Take damage

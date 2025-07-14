@@ -14,28 +14,33 @@ local Collectible         = require("src.Collectible")
 local PowerUp             = require("src.PowerUp")
 local Bullet              = require("src.Bullet")
 local FloatingTextManager = require("src.FloatingTextManager")
+local HUD                 = require("src.hud")
 
 -- Game configuration
 local CONFIG              = {
     game_width = 160,
     game_height = 144,
     scale_factor = 5,
-    skip_start_menu = true,               -- Set to true to skip start menu for development
-    allow_debug_gameOver = true,          -- Set to true if want to press '0' to auto-gameOver
-    allow_debug_spawn_collectible = true, -- Press '9' to spawn a collectible/power-up for debugging
-    scroll_speed = 60,                    -- Pixels per second horizontal scroll speed (increased from 30)
+    skip_start_menu = true,                -- Set to true to skip start menu for development
+    allow_debug_gameOver = false,          -- Set to true if want to press '0' to auto-gameOver
+    allow_debug_spawn_collectible = false, -- Press '9' to spawn a collectible/power-up for debugging
+    scroll_speed = 60,                     -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
-    enemy_spawn_interval = 2.0,           -- Seconds between enemy spawns
-    enemy_spawn_chance = 0.7,             -- Probability of spawning an enemy each interval
-    max_enemies = 8,                      -- Maximum number of enemies on screen at once
+    enemy_spawn_interval = 2.0,            -- Seconds between enemy spawns
+    enemy_spawn_chance = 0.7,              -- Probability of spawning an enemy each interval
+    max_enemies = 8,                       -- Maximum number of enemies on screen at once
     -- Collectible spawning configuration
-    collectible_spawn_interval = 0.5,     -- Seconds between collectible spawns (was 3.0)
-    collectible_spawn_chance = 1.0,       -- Probability of spawning a collectible each interval (was 0.6)
-    max_collectibles = 25,                -- Maximum number of collectibles on screen at once (was 12)
+    collectible_spawn_interval = 0.5,      -- Seconds between collectible spawns (was 3.0)
+    collectible_spawn_chance = 1.0,        -- Probability of spawning a collectible each interval (was 0.6)
+    max_collectibles = 25,                 -- Maximum number of collectibles on screen at once (was 12)
 
     -- UI configuration
     health_text_offset_x = 40, -- Pixels from right edge when drawing health text
 }
+
+-- Hit-pause (slow-mo) constants -----------------------------------------------------------
+local HIT_PAUSE_DURATION  = 0.20 -- seconds of slow motion on heavy hits (extended)
+local SLOWMO_SCALE        = 0.04 -- fraction of normal speed during hit-pause (very slow)
 
 local globalGameState     = {
     highScore = 0
@@ -54,12 +59,18 @@ local game                = {
     customMapDrawer = nil,
     activeEffects = {},
     bulletShootTimer = 0,
+    -- Hit-pause state
+    hitPauseTimer = 0,
+    timeScale = 1,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
     state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused", "gameOver"
     score = 0,
 }
+
+-- Forward declaration for hit-pause helper so functions above its definition can call it
+local trigger_hit_pause
 
 -- Helper so Bullet can query camera X without circular require
 _G.CONFIG                 = CONFIG
@@ -74,9 +85,21 @@ _G.ENEMY_SPEED_MULT       = 1
 
 -- Helpers
 local function init_window()
-    local font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 4)
+    -- Default small pixel font (4px high) for general UI / menus
+    local font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 4, 'mono')
     font:setFilter("nearest", "nearest")
     love.graphics.setFont(font)
+
+    -- Larger pixel font (8px high – native size of PixelOperator) for prominent HUD elements
+    local big_font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 8, 'mono')
+    big_font:setFilter("nearest", "nearest")
+    -- Expose for use during rendering without creating every frame
+    _G.UI_BIG_FONT = big_font
+
+    -- Even larger pixel font (16px high) for main menus (used for start/pause/game-over overlays)
+    local menu_font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 16, 'mono')
+    menu_font:setFilter("nearest", "nearest")
+    _G.UI_MENU_FONT = menu_font
 
     -- Set default filter to nearest
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -90,6 +113,8 @@ local function init_window()
 
     -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
 end
+
+-- (Health icon drawing moved to src/hud.lua)
 
 local function init_game()
     -- Load map file
@@ -120,6 +145,9 @@ local function init_game()
 
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
+
+    -- Initialise HUD with player reference for health icons
+    HUD.init(game.player, CONFIG.game_width)
 
     -- Initialize enemy spawner
     local spawner_config = {
@@ -195,7 +223,8 @@ local function handle_collisions(dt)
             end
         end
 
-        if entity ~= game.player and game.player:collidesWith(entity) then
+        -- Skip player–bullet collisions (bullets are fired by player)
+        if entity ~= game.player and game.player:collidesWith(entity) and not entity.is_bullet then
             if entity.collectible_type then
                 -- Collect the item and increment score
                 game.score = game.score + entity.value
@@ -208,6 +237,9 @@ local function handle_collisions(dt)
                 -- Apply collectible-specific effects (e.g., power-ups)
                 if entity.applyEffect then
                     entity:applyEffect(game)
+                    game.soundManager:playPointTone(true)  -- fancy tone
+                else
+                    game.soundManager:playPointTone(false) -- not fancy tone
                 end
 
                 entity.active = false
@@ -220,6 +252,7 @@ local function handle_collisions(dt)
                 if not game.player.invincible then
                     game.player:takeDamage(1)
                     game.soundManager:playCollisionTone()
+                    trigger_hit_pause()
                 end
             end
         end
@@ -243,10 +276,18 @@ local function transition_to_gameOver_if_needed(forceTransition)
         -- Play high-score jingle if a new high score was set (jingle internally stops music/ambience too)
         if newHighScoreAchieved then
             game.soundManager:playHighScoreJingle()
+        else
+            game.soundManager:playDidntGetHighScore()
         end
 
         game.state = "gameOver"
     end
+end
+
+-- Trigger a brief hit-pause (called on big impacts)
+function trigger_hit_pause()
+    game.hitPauseTimer = HIT_PAUSE_DURATION
+    game.timeScale = SLOWMO_SCALE
 end
 
 -- Main game loop
@@ -263,8 +304,23 @@ end
 function love.update(dt)
     -- Only update game when playing
     if game.state == "playing" then
+        -- Handle hit-pause timer & compute scaled dt
+        if game.hitPauseTimer > 0 then
+            game.hitPauseTimer = game.hitPauseTimer - dt
+            if game.hitPauseTimer <= 0 then
+                game.hitPauseTimer = 0
+                game.timeScale = 1
+            else
+                -- Smoothly interpolate from slow to normal speed
+                local progress = 1 - (game.hitPauseTimer / HIT_PAUSE_DURATION) -- 0 → 1
+                game.timeScale = SLOWMO_SCALE + (1 - SLOWMO_SCALE) * progress
+            end
+        end
+
+        local scaled_dt = dt * game.timeScale
+
         -- Update camera (constant scrolling) and get wrap information
-        local wrapped, wrap_offset = game.camera:update(dt, map)
+        local wrapped, wrap_offset = game.camera:update(scaled_dt, map)
 
         -- If camera wrapped, shift all entities so they stay in the same logical place
         if wrapped and wrap_offset > 0 then
@@ -277,25 +333,25 @@ function love.update(dt)
         end
 
         -- Update world
-        map:update(dt)
+        map:update(scaled_dt)
 
         -- Update enemy spawning (pass current camera position so spawns are in world coords)
         local cam_x, _ = game.camera:get_position()
-        game.enemySpawner:update(dt, game.entities, cam_x)
+        game.enemySpawner:update(scaled_dt, game.entities, cam_x)
         -- Update collectible spawning
-        game.collectibleSpawner:update(dt, game.entities, cam_x, map)
+        game.collectibleSpawner:update(scaled_dt, game.entities, cam_x, map)
 
-        update_entities(dt)
+        update_entities(scaled_dt)
 
         -- Update floating combat text
         if game.floatingTextManager then
-            game.floatingTextManager:update(dt)
+            game.floatingTextManager:update(scaled_dt)
         end
 
         -- Auto-shoot bullets while gun power is active
         if game.player.has_gun then
             local shootInterval = 0.25
-            game.bulletShootTimer = game.bulletShootTimer + dt
+            game.bulletShootTimer = game.bulletShootTimer + scaled_dt
             if game.bulletShootTimer >= shootInterval then
                 game.bulletShootTimer = game.bulletShootTimer - shootInterval
 
@@ -311,7 +367,7 @@ function love.update(dt)
         -- Tick active timed effects (power-ups etc.)
         for i = #game.activeEffects, 1, -1 do
             local eff = game.activeEffects[i]
-            eff.remaining = eff.remaining - dt
+            eff.remaining = eff.remaining - scaled_dt
             if eff.remaining <= 0 then
                 if eff.type == "slow_enemies" then
                     local mul = eff.multiplier or 0.5
@@ -331,7 +387,7 @@ function love.update(dt)
             end
         end
 
-        handle_collisions(dt)
+        handle_collisions(scaled_dt)
 
         -- If player moves off-screen, inflict damage (once) and respawn near center of current view.
         do
@@ -385,9 +441,7 @@ function love.draw()
     love.graphics.setCanvas(game.canvas)
     love.graphics.clear(game.background_color)
 
-    if game.state == "start" then
-        Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
-    elseif game.state == "playing" then
+    if game.state == "playing" then
         love.graphics.setShader(reflection_shader)
         local time = love.timer.getTime()
         local displacementTex = love.graphics.newImage("assets/images/Water.png")
@@ -405,7 +459,7 @@ function love.draw()
         reflection_shader:send("displacement", displacementTex)
         reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
 
-        
+
 
 
 
@@ -417,6 +471,7 @@ function love.draw()
         ripple_shader:send("wave_height", 0.02)
         ripple_shader:send("wave_speed", 0.1)
         ripple_shader:send("wave_freq", 5.0)
+        ripple_shader:send("iResolution", { CONFIG.game_width, CONFIG.game_height })
         love.graphics.push()
 
 
@@ -452,14 +507,23 @@ function love.draw()
         if game.floatingTextManager then
             game.floatingTextManager:draw()
         end
+
+        -- Draw hit-pause ring effect around player
+        if game.hitPauseTimer > 0 then
+            local hp_alpha = game.hitPauseTimer / HIT_PAUSE_DURATION
+            local radius = 6 + (1 - hp_alpha) * 26
+            love.graphics.setColor(1, 1, 1, hp_alpha * 0.8) -- white
+            love.graphics.setLineWidth(2)
+            love.graphics.circle("line", game.player.x, game.player.y - game.player.height / 2, radius)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setLineWidth(1)
+        end
         love.graphics.pop()
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
-        -- Draw score
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("Score: " .. tostring(game.score), 10, 10)
-        love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
+        -- Draw HUD (score + health)
+        HUD.draw(game.score)
     elseif game.state == "paused" then
         -- Draw the game world in the background
         game.camera:draw_scrolling_map(map)
@@ -473,19 +537,27 @@ function love.draw()
 
         -- Screen-space overlays
         debug_helpers.draw()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("Score: " .. tostring(game.score), 10, 10)
-        love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
-        -- Draw pause overlay
-        Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
+        HUD.draw(game.score)
+        -- Pause overlay will be drawn later in screen space
     elseif game.state == "gameOver" then
-        Menu.draw_gameOver_menu(CONFIG.game_width, CONFIG.game_height, game.score, globalGameState.highScore)
+        -- Nothing to draw inside low-res canvas; overlay drawn later
     end
 
     -- Switch back to main screen and draw the scaled canvas
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
+
     love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
+
+    -- Draw overlay menus (screen-space, not scaled again)
+    local screen_w, screen_h = love.graphics.getWidth(), love.graphics.getHeight()
+    if game.state == "start" then
+        Menu.draw_start_menu(screen_w, screen_h)
+    elseif game.state == "paused" then
+        Menu.draw_pause_menu(screen_w, screen_h)
+    elseif game.state == "gameOver" then
+        Menu.draw_gameOver_menu(screen_w, screen_h, game.score, globalGameState.highScore)
+    end
 end
 
 function love.keypressed(key)
