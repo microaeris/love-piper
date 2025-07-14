@@ -19,7 +19,7 @@ function HUD.init(player, game_width)
 end
 
 -- Internal helper to draw duck icons for health
-local function draw_health_icons()
+local function draw_health_icons(y_offset)
     if not (HUD.player and HUD.icon_image and HUD.icon_quad) then return end
 
     local health     = HUD.player.health or 0
@@ -29,7 +29,7 @@ local function draw_health_icons()
     local spacing    = HUD.ICON_SPACING
     local total_w    = max_health * icon_w + (max_health - 1) * spacing
     local start_x    = HUD.game_width - total_w - HUD.MARGIN_RIGHT
-    local y          = HUD.MARGIN_TOP
+    local y          = y_offset or HUD.MARGIN_TOP
 
     for i = 1, max_health do
         if i <= health then
@@ -51,10 +51,16 @@ function HUD.draw(score)
     local hudFont  = _G.UI_BIG_FONT or prevFont
     love.graphics.setFont(hudFont)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Score: " .. tostring(score), 10, HUD.MARGIN_TOP)
+    local text_y = HUD.MARGIN_TOP
+    love.graphics.print(tostring(score), 10, text_y)
+
+    -- Determine vertical alignment offset for icons to centre with text height
+    local font_h = hudFont:getHeight()
+    local icon_h = 16 * HUD.ICON_SCALE
+    local icon_y = text_y + math.floor((font_h - icon_h) / 2)
 
     -- Health icons (top-right)
-    draw_health_icons()
+    draw_health_icons(icon_y)
 
     love.graphics.setFont(prevFont)
 end
