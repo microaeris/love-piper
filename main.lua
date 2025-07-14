@@ -21,7 +21,7 @@ local CONFIG              = {
     game_height = 144,
     scale_factor = 5,
     skip_start_menu = true,               -- Set to true to skip start menu for development
-    allow_debug_gameOver = true,          -- Set to true if want to press '0' to auto-gameOver
+    allow_debug_gameOver = false,          -- Set to true if want to press '0' to auto-gameOver
     allow_debug_spawn_collectible = true, -- Press '9' to spawn a collectible/power-up for debugging
     scroll_speed = 60,                    -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
