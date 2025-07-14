@@ -21,18 +21,18 @@ local CONFIG              = {
     game_width = 160,
     game_height = 144,
     scale_factor = 5,
-    skip_start_menu = true,               -- Set to true to skip start menu for development
-    allow_debug_gameOver = false,         -- Set to true if want to press '0' to auto-gameOver
-    allow_debug_spawn_collectible = true, -- Press '9' to spawn a collectible/power-up for debugging
-    scroll_speed = 60,                    -- Pixels per second horizontal scroll speed (increased from 30)
+    skip_start_menu = true,                -- Set to true to skip start menu for development
+    allow_debug_gameOver = false,          -- Set to true if want to press '0' to auto-gameOver
+    allow_debug_spawn_collectible = false, -- Press '9' to spawn a collectible/power-up for debugging
+    scroll_speed = 60,                     -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
-    enemy_spawn_interval = 2.0,           -- Seconds between enemy spawns
-    enemy_spawn_chance = 0.7,             -- Probability of spawning an enemy each interval
-    max_enemies = 8,                      -- Maximum number of enemies on screen at once
+    enemy_spawn_interval = 2.0,            -- Seconds between enemy spawns
+    enemy_spawn_chance = 0.7,              -- Probability of spawning an enemy each interval
+    max_enemies = 8,                       -- Maximum number of enemies on screen at once
     -- Collectible spawning configuration
-    collectible_spawn_interval = 0.5,     -- Seconds between collectible spawns (was 3.0)
-    collectible_spawn_chance = 1.0,       -- Probability of spawning a collectible each interval (was 0.6)
-    max_collectibles = 25,                -- Maximum number of collectibles on screen at once (was 12)
+    collectible_spawn_interval = 0.5,      -- Seconds between collectible spawns (was 3.0)
+    collectible_spawn_chance = 1.0,        -- Probability of spawning a collectible each interval (was 0.6)
+    max_collectibles = 25,                 -- Maximum number of collectibles on screen at once (was 12)
 
     -- UI configuration
     health_text_offset_x = 40, -- Pixels from right edge when drawing health text
@@ -95,6 +95,11 @@ local function init_window()
     big_font:setFilter("nearest", "nearest")
     -- Expose for use during rendering without creating every frame
     _G.UI_BIG_FONT = big_font
+
+    -- Even larger pixel font (16px high) for main menus (used for start/pause/game-over overlays)
+    local menu_font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 16, 'mono')
+    menu_font:setFilter("nearest", "nearest")
+    _G.UI_MENU_FONT = menu_font
 
     -- Set default filter to nearest
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -231,7 +236,7 @@ local function handle_collisions(dt)
                 -- Apply collectible-specific effects (e.g., power-ups)
                 if entity.applyEffect then
                     entity:applyEffect(game)
-                    game.soundManager:playPointTone(true) -- fancy tone
+                    game.soundManager:playPointTone(true)  -- fancy tone
                 else
                     game.soundManager:playPointTone(false) -- not fancy tone
                 end
@@ -435,9 +440,7 @@ function love.draw()
     love.graphics.setCanvas(game.canvas)
     love.graphics.clear(game.background_color)
 
-    if game.state == "start" then
-        Menu.draw_start_menu(CONFIG.game_width, CONFIG.game_height)
-    elseif game.state == "playing" then
+    if game.state == "playing" then
         love.graphics.setShader(reflection_shader)
         local time = love.timer.getTime()
         local displacementTex = love.graphics.newImage("assets/images/Water.png")
@@ -532,16 +535,26 @@ function love.draw()
         -- Screen-space overlays
         debug_helpers.draw()
         HUD.draw(game.score)
-        -- Draw pause overlay
-        Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
+        -- Pause overlay will be drawn later in screen space
     elseif game.state == "gameOver" then
-        Menu.draw_gameOver_menu(CONFIG.game_width, CONFIG.game_height, game.score, globalGameState.highScore)
+        -- Nothing to draw inside low-res canvas; overlay drawn later
     end
 
     -- Switch back to main screen and draw the scaled canvas
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1, 1)
+
     love.graphics.draw(game.canvas, 0, 0, 0, CONFIG.scale_factor, CONFIG.scale_factor)
+
+    -- Draw overlay menus (screen-space, not scaled again)
+    local screen_w, screen_h = love.graphics.getWidth(), love.graphics.getHeight()
+    if game.state == "start" then
+        Menu.draw_start_menu(screen_w, screen_h)
+    elseif game.state == "paused" then
+        Menu.draw_pause_menu(screen_w, screen_h)
+    elseif game.state == "gameOver" then
+        Menu.draw_gameOver_menu(screen_w, screen_h, game.score, globalGameState.highScore)
+    end
 end
 
 function love.keypressed(key)
