@@ -33,7 +33,7 @@ local function draw_health_icons(y_offset)
 
     for i = 1, max_health do
         if i <= health then
-            love.graphics.setColor(1, 0, 0, 1) -- red (filled heart equivalent)
+            love.graphics.setColor(1, 1, 1, 1) -- white (filled heart equivalent)
         else
             love.graphics.setColor(0, 0, 0, 1) -- black (lost health)
         end

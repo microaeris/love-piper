@@ -96,8 +96,8 @@ local function init_window()
     -- Expose for use during rendering without creating every frame
     _G.UI_BIG_FONT = big_font
 
-    -- Even larger pixel font (16px high) for main menus
-    local menu_font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 12, 'mono')
+    -- Even larger pixel font (16px high) for main menus (used for start/pause/game-over overlays)
+    local menu_font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 16, 'mono')
     menu_font:setFilter("nearest", "nearest")
     _G.UI_MENU_FONT = menu_font
 

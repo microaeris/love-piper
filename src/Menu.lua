@@ -50,38 +50,55 @@ function Menu.draw_gameOver_menu(game_width, game_height, score, highScore)
     local font = _G.UI_MENU_FONT or prevFont
     love.graphics.setFont(font)
 
+    -- Dynamic vertical spacing based on font size
+    local fh = font:getHeight() -- font height
+    local spacing = fh + 4      -- add a little extra padding
+    -- Start drawing a few lines above vertical centre
+    local y = game_height / 2 - spacing * 2.5
+
     -- Title
     local title = "GAME OVER"
     local title_width = font:getWidth(title)
-    love.graphics.print(title, (game_width - title_width) / 2, game_height / 2 - 60)
+    love.graphics.print(title, (game_width - title_width) / 2, y)
 
-    -- "Score"
-    local instruction = "SCORE"
-    if (score == highScore and score ~= 0) then
-        instruction = "NEW HIGH SCORE!!!"
-    end
+    -- Next line
+    y = y + spacing
+
+    -- "Score" or "NEW HIGH SCORE!!!"
+    local instruction = (score == highScore and score ~= 0) and "NEW HIGH SCORE!!!" or "SCORE"
     local instruction_width = font:getWidth(instruction)
-    love.graphics.print(instruction, (game_width - instruction_width) / 2, game_height / 2 - 30)
+    love.graphics.print(instruction, (game_width - instruction_width) / 2, y)
 
-    -- Score #
+    -- Next line
+    y = y + spacing
+
+    -- Score number
     local scoreText = tostring(score)
-    local score_width = font:getWidth(score)
-    love.graphics.print(scoreText, (game_width - score_width) / 2, game_height / 2 - 15)
+    local score_width = font:getWidth(scoreText)
+    love.graphics.print(scoreText, (game_width - score_width) / 2, y)
 
-    -- "High Score"
-    local high_score = "HIGH SCORE"
-    local high_score_width = font:getWidth(high_score)
-    love.graphics.print(high_score, (game_width - high_score_width) / 2, game_height / 2 + 10)
+    -- Next line
+    y = y + spacing
 
-    -- Score #
+    -- "High Score" label
+    local high_score_label = "HIGH SCORE"
+    local high_score_width = font:getWidth(high_score_label)
+    love.graphics.print(high_score_label, (game_width - high_score_width) / 2, y)
+
+    -- Next line
+    y = y + spacing
+
+    -- High score number
     local high_score_num = tostring(highScore)
     local high_score_num_width = font:getWidth(high_score_num)
-    love.graphics.print(high_score_num, (game_width - high_score_num_width) / 2, game_height / 2 + 25)
+    love.graphics.print(high_score_num, (game_width - high_score_num_width) / 2, y)
 
+    -- Extra gap before instruction
+    y = y + spacing * 1.5
 
     local pressEnter = "Press ENTER to try again"
     local press_enter_width = font:getWidth(pressEnter)
-    love.graphics.print(pressEnter, (game_width - press_enter_width) / 2, game_height / 2 + 50)
+    love.graphics.print(pressEnter, (game_width - press_enter_width) / 2, y)
 
     -- Restore previous font
     love.graphics.setFont(prevFont)
