@@ -223,7 +223,8 @@ local function handle_collisions(dt)
             end
         end
 
-        if entity ~= game.player and game.player:collidesWith(entity) then
+        -- Skip player–bullet collisions (bullets are fired by player)
+        if entity ~= game.player and game.player:collidesWith(entity) and not entity.is_bullet then
             if entity.collectible_type then
                 -- Collect the item and increment score
                 game.score = game.score + entity.value
