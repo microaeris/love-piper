@@ -20,5 +20,5 @@ zip -9 -r game.love . \
 
 # If you see the error "Range consisting of offset and length are out of
 # bounds", increase the memory limit (-m argument)
-love.js game.love $BUILD_DIR -t Piper -c -m 28719952
+love.js game.love $BUILD_DIR -t Piper -m 28719952
 cp minimal-index.html $BUILD_DIR/index.html

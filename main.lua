@@ -179,7 +179,7 @@ local function init_game()
     -- Initate the shaderes
     ripple_shader = love.graphics.newShader("assets/shaders/ripples.glsl")
     lighting_shader = love.graphics.newShader("assets/shaders/lighting.glsl")
-    reflection_shader = love.graphics.newShader("assets/shaders/reflection.glsl")
+    -- reflection_shader = love.graphics.newShader("assets/shaders/reflection.glsl")
     sparkle_shader = love.graphics.newShader("assets/shaders/sparkles.glsl")
 
     -- Reset score
@@ -442,7 +442,7 @@ function love.draw()
     love.graphics.clear(game.background_color)
 
     if game.state == "playing" then
-        love.graphics.setShader(reflection_shader)
+        -- love.graphics.setShader(reflection_shader)
         local time = love.timer.getTime()
         local displacementTex = love.graphics.newImage("assets/images/Water.png")
 
@@ -455,9 +455,9 @@ function love.draw()
         -- extern float love_time;
         -- extern vec2 screenSize;
 
-        reflection_shader:send("reflection_time", time)
-        reflection_shader:send("displacement", displacementTex)
-        reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
+        -- reflection_shader:send("reflection_time", time)
+        -- reflection_shader:send("displacement", displacementTex)
+        -- reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
 
 
 
