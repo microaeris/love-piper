@@ -16,7 +16,7 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 pixel_coords) {
   // Displacing `x` and `y` equally looks unnatural
   uv.y +=
     sin((uv.x + time * wave_speed) * wave_freq)
-    * cos((uv.x + time * wave_speed) * wave_freq * 0.5)
+    * cos((uv.x + time * wave_speed) * wave_freq * 0.9)
     * wave_height * 0.9;
 
   vec4 pixel = Texel(texture, uv);
