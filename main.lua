@@ -84,9 +84,16 @@ _G.ENEMY_SPEED_MULT       = 1
 
 -- Helpers
 local function init_window()
-    local font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 4)
+    -- Default small pixel font (4px high) for general UI / menus
+    local font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 4, 'mono')
     font:setFilter("nearest", "nearest")
     love.graphics.setFont(font)
+
+    -- Larger pixel font (8px high – native size of PixelOperator) for prominent HUD elements
+    local big_font = love.graphics.newFont('assets/fonts/PixelOperatorMono8.ttf', 8, 'mono')
+    big_font:setFilter("nearest", "nearest")
+    -- Expose for use during rendering without creating every frame
+    _G.UI_BIG_FONT = big_font
 
     -- Set default filter to nearest
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -498,10 +505,18 @@ function love.draw()
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
-        -- Draw score
+        -- Draw score / health with larger font for clarity
+        local prevFont = love.graphics.getFont()
+        local hudFont  = _G.UI_BIG_FONT or prevFont
+        love.graphics.setFont(hudFont)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("Score: " .. tostring(game.score), 10, 10)
-        love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
+        local scoreText = "Score: " .. tostring(game.score)
+        love.graphics.print(scoreText, 10, 10)
+
+        local hpText = "HP: " .. tostring(game.player.health)
+        local hpWidth = hudFont:getWidth(hpText)
+        love.graphics.print(hpText, CONFIG.game_width - hpWidth - 10, 10)
+        love.graphics.setFont(prevFont)
     elseif game.state == "paused" then
         -- Draw the game world in the background
         game.camera:draw_scrolling_map(map)
@@ -515,9 +530,17 @@ function love.draw()
 
         -- Screen-space overlays
         debug_helpers.draw()
+        local prevFont = love.graphics.getFont()
+        local hudFont  = _G.UI_BIG_FONT or prevFont
+        love.graphics.setFont(hudFont)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("Score: " .. tostring(game.score), 10, 10)
-        love.graphics.print("HP: " .. tostring(game.player.health), CONFIG.game_width - CONFIG.health_text_offset_x, 10)
+        local scoreText = "Score: " .. tostring(game.score)
+        love.graphics.print(scoreText, 10, 10)
+
+        local hpText = "HP: " .. tostring(game.player.health)
+        local hpWidth = hudFont:getWidth(hpText)
+        love.graphics.print(hpText, CONFIG.game_width - hpWidth - 10, 10)
+        love.graphics.setFont(prevFont)
         -- Draw pause overlay
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "gameOver" then
