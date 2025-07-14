@@ -116,9 +116,10 @@ vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
 {
     // Normalized pixel coordinates (from 0 to 1 on largest axis)
     vec2 uv = screenCoord / vec2(iResolution.x, iResolution.y) * 4.0;
+    uv.x += time * 4;
 
     // Initial input point
-    vec3 X = vec3(uv, mod(time / 2.0, 578.0) * 0.8660254037844386);
+    vec3 X = vec3(uv, mod(time / 8.0, 578.0) * 0.8660254037844386);
 
     // Evaluate noise once
     vec4 noiseResult = os2NoiseWithDerivatives_ImproveXY(X);
@@ -184,11 +185,10 @@ vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
     // apply a blue tint to the reflection
     // pixel.b += 0.5;
 
-    if (value > 0.2) {
-
+    if (value > 0.1) {
         vec4 col = vec4(blendMultiply(origin.rgb, 0.05 * col, 0.01), 1.0);
         float avg_color = (col.r + col.g + col.b) / 3.0;
-        if (avg_color < 0.3) { // if the black stuff, makr it the brighter color.
+        if (avg_color < 0.1) { // if the black stuff, makr it the brighter color.
             return vec4(.55, .89, .62, 1.0) * 1.05;
         } else {
             return col;
