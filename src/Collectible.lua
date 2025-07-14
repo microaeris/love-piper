@@ -1,6 +1,7 @@
 -- Collectible class that extends Entity
 local Entity              = require("src.Entity")
 local utils               = require("src.utils")
+local Sprite              = require("src.Sprite")
 
 -- Constants ------------------------------------------------------------------------------
 local COLLECTIBLE_SIZE    = 8   -- Width and height (pixels) of the pickup hitbox
@@ -9,13 +10,27 @@ local BOB_SPEED           = 4   -- Speed multiplier for bobbing animation
 local BOB_AMPLITUDE       = 2   -- Pixel amplitude of bob motion
 local PIXEL_ALIGN_OFFSET  = 0.5 -- Offset for sub-pixel rounding when drawing
 
-local Collectible         = Entity:extend()
+
+local COIN_SPRITE_PATH       = 'assets/images/sprites/coin.png'
+local COIN_SPRITE_FRAME_SIZE = 16 -- Each frame is 16x16 on the sheet
+
+local Collectible            = Entity:extend()
 
 -- Constructor for creating a new collectible
 -- value: how much to add to the score when collected
 function Collectible.new(x, y, value)
     local self = Entity.new(x, y, COLLECTIBLE_SIZE, COLLECTIBLE_SIZE)
     setmetatable(self, Collectible)
+
+    -- Sprite / visual setup -------------------------------------------------------------
+    -- Lazily create the shared sprite sheet once
+    if not Collectible._spriteSheet then
+        Collectible._spriteSheet = Sprite.new(COIN_SPRITE_PATH, COIN_SPRITE_FRAME_SIZE, COIN_SPRITE_FRAME_SIZE)
+    end
+
+    self.spriteSheet = Collectible._spriteSheet
+    self.frameCoords = { 1, 1 }
+
 
     -- Collectible-specific properties
     self.value = value
@@ -50,14 +65,12 @@ end
 function Collectible:draw()
     if not self.active then return end
 
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle(
-        "fill",
-        self.x - self.width / 2,
-        self.y - self.height / 2,
-        self.width,
-        self.height
-    )
+    -- Calculate top-left position for 16×16 sprite so its centre aligns with entity centre
+    local sprite_x = math.floor(self.x - COIN_SPRITE_FRAME_SIZE / 2 + PIXEL_ALIGN_OFFSET)
+    local sprite_y = math.floor(self.y - COIN_SPRITE_FRAME_SIZE / 2 + PIXEL_ALIGN_OFFSET)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    self.spriteSheet:drawFrame(1, 1, sprite_x, sprite_y)
 end
 
 return Collectible
