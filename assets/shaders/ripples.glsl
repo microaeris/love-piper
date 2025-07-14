@@ -112,7 +112,7 @@ vec3 blendMultiply(vec3 base, vec3 blend, float opacity) {
 vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
 {
     // Normalized pixel coordinates (from 0 to 1 on largest axis)
-    vec2 uv = screenCoord / vec2(iResolution.x, iResolution.y) * 4.0;
+    vec2 uv = screenCoord / vec2(iResolution.x, iResolution.y) * 16.0;
 
     // Initial input point
     vec3 X = vec3(uv, mod(time, 578.0) * 0.8660254037844386);
@@ -125,7 +125,8 @@ vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
     noiseResult = os2NoiseWithDerivatives_ImproveXY(X - noiseResult.xyz / 16.0);
     float value = noiseResult.w;
     // Time varying pixel color
-    vec3 col = vec3(.431, .8, 1.0) * (0.5 + 0.5 * value);
+    // vec3 col = vec3(.431, .8, 1.0) * (0.5 + 0.5 * value);
+    vec3 col = vec3(1.0, 1.0, 1.0) * (value);
 
     // color = vec4(col, 1.0);
     // return color;
@@ -158,5 +159,12 @@ vec4 effect(vec4 color, Image tex, vec2 texCoord, vec2 screenCoord)
 
     vec4 temp = vec4(col, .2);
     // vec3 rgb = (origin.a > 0.0) ? origin.rgb / origin.a : vec3(0.0);
-    return origin * vec4(1.0, col.y, col.z, 1.0);
+    // return origin * vec4(col.x, col.y, col.z, 1.0);
+
+    if (value > 0.5) {
+        return vec4(1.0, 1.0, 1.0, 1.0);
+    } else {
+        return origin;
+    }
+
 }
