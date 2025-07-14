@@ -437,11 +437,11 @@ function love.draw()
         love.graphics.setShader()
 
         -- Draw scrolling background (map)
-        love.graphics.setShader(lighting_shader)
-        love.graphics.push()
+        -- love.graphics.setShader(lighting_shader)
+        -- love.graphics.push()
         game.camera:draw_scrolling_map(map)
-        love.graphics.pop()
-        love.graphics.setShader()
+        -- love.graphics.pop()
+        -- love.graphics.setShader()
 
         -- Draw entities with camera transform
         love.graphics.push()

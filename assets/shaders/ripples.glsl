@@ -21,6 +21,6 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 pixel_coords) {
 
   vec4 pixel = Texel(texture, uv);
   // apply a blue tint to the reflection
-  pixel.b += 0.5;
+  // pixel.b += 0.5;
   return pixel;
 }
