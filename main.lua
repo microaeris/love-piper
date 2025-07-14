@@ -14,6 +14,7 @@ local Collectible         = require("src.Collectible")
 local PowerUp             = require("src.PowerUp")
 local Bullet              = require("src.Bullet")
 local FloatingTextManager = require("src.FloatingTextManager")
+local HUD                 = require("src.hud")
 
 -- Game configuration
 local CONFIG              = {
@@ -21,7 +22,7 @@ local CONFIG              = {
     game_height = 144,
     scale_factor = 5,
     skip_start_menu = true,               -- Set to true to skip start menu for development
-    allow_debug_gameOver = false,          -- Set to true if want to press '0' to auto-gameOver
+    allow_debug_gameOver = false,         -- Set to true if want to press '0' to auto-gameOver
     allow_debug_spawn_collectible = true, -- Press '9' to spawn a collectible/power-up for debugging
     scroll_speed = 60,                    -- Pixels per second horizontal scroll speed (increased from 30)
     -- Enemy spawning configuration
@@ -108,6 +109,8 @@ local function init_window()
     -- love.window.setMode(window_width * CONFIG.scale_factor, window_height * CONFIG.scale_factor)
 end
 
+-- (Health icon drawing moved to src/hud.lua)
+
 local function init_game()
     -- Load map file
     map = sti("assets/maps/test_map.lua")
@@ -137,6 +140,9 @@ local function init_game()
 
     -- Create player entity
     game.player = Player.new(player_map_obj.x, player_map_obj.y, 16, 16)
+
+    -- Initialise HUD with player reference for health icons
+    HUD.init(game.player, CONFIG.game_width)
 
     -- Initialize enemy spawner
     local spawner_config = {
@@ -261,6 +267,8 @@ local function transition_to_gameOver_if_needed(forceTransition)
         -- Play high-score jingle if a new high score was set (jingle internally stops music/ambience too)
         if newHighScoreAchieved then
             game.soundManager:playHighScoreJingle()
+        else
+            game.soundManager:playDidntGetHighScore()
         end
 
         game.state = "gameOver"
@@ -505,18 +513,8 @@ function love.draw()
 
         -- Screen-space overlays (debug, UI)
         debug_helpers.draw()
-        -- Draw score / health with larger font for clarity
-        local prevFont = love.graphics.getFont()
-        local hudFont  = _G.UI_BIG_FONT or prevFont
-        love.graphics.setFont(hudFont)
-        love.graphics.setColor(1, 1, 1, 1)
-        local scoreText = "Score: " .. tostring(game.score)
-        love.graphics.print(scoreText, 10, 10)
-
-        local hpText = "HP: " .. tostring(game.player.health)
-        local hpWidth = hudFont:getWidth(hpText)
-        love.graphics.print(hpText, CONFIG.game_width - hpWidth - 10, 10)
-        love.graphics.setFont(prevFont)
+        -- Draw HUD (score + health)
+        HUD.draw(game.score)
     elseif game.state == "paused" then
         -- Draw the game world in the background
         game.camera:draw_scrolling_map(map)
@@ -530,17 +528,7 @@ function love.draw()
 
         -- Screen-space overlays
         debug_helpers.draw()
-        local prevFont = love.graphics.getFont()
-        local hudFont  = _G.UI_BIG_FONT or prevFont
-        love.graphics.setFont(hudFont)
-        love.graphics.setColor(1, 1, 1, 1)
-        local scoreText = "Score: " .. tostring(game.score)
-        love.graphics.print(scoreText, 10, 10)
-
-        local hpText = "HP: " .. tostring(game.player.health)
-        local hpWidth = hudFont:getWidth(hpText)
-        love.graphics.print(hpText, CONFIG.game_width - hpWidth - 10, 10)
-        love.graphics.setFont(prevFont)
+        HUD.draw(game.score)
         -- Draw pause overlay
         Menu.draw_pause_menu(CONFIG.game_width, CONFIG.game_height)
     elseif game.state == "gameOver" then

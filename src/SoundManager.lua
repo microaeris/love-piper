@@ -5,7 +5,7 @@ SoundManager.__index = SoundManager
 local DEFAULT_MUSIC_VOLUME = 0.7
 local DEFAULT_JINGLE_VOLUME = 0.7
 local DEFAULT_AMBIENCE_VOLUME = 0.5
-local DEFAULT_SFX_VOLUME = 0.8
+local DEFAULT_SFX_VOLUME = 0.5
 
 function SoundManager.new()
 	local self = setmetatable({}, SoundManager)
@@ -85,6 +85,19 @@ function SoundManager:playHighScoreJingle()
 	end
 
 	local jingle = love.audio.newSource("assets/sfx/high-score-jingle.mp3", "static")
+	jingle:setVolume(DEFAULT_JINGLE_VOLUME)
+	jingle:play()
+
+	self.currentSFX = jingle
+end
+
+function SoundManager:playDidntGetHighScore()
+	-- Stop any current SFX so the jingle can be clearly heard
+	if self.currentSFX ~= nil and self.currentSFX:isPlaying() then
+		self.currentSFX:stop()
+	end
+
+	local jingle = love.audio.newSource("assets/sfx/no.mp3", "static")
 	jingle:setVolume(DEFAULT_JINGLE_VOLUME)
 	jingle:play()
 
