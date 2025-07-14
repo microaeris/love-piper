@@ -470,6 +470,7 @@ function love.draw()
         ripple_shader:send("wave_height", 0.02)
         ripple_shader:send("wave_speed", 0.1)
         ripple_shader:send("wave_freq", 5.0)
+        ripple_shader:send("iResolution", {CONFIG.game_width, CONFIG.game_height})
         love.graphics.push()
 
 
