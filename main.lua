@@ -231,6 +231,9 @@ local function handle_collisions(dt)
                 -- Apply collectible-specific effects (e.g., power-ups)
                 if entity.applyEffect then
                     entity:applyEffect(game)
+                    game.soundManager:playPointTone(true) -- fancy tone
+                else
+                    game.soundManager:playPointTone(false) -- not fancy tone
                 end
 
                 entity.active = false

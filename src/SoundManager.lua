@@ -77,6 +77,18 @@ function SoundManager:playCollisionTone()
 	self.currentSFX = self._collisionToneSource
 end
 
+function SoundManager:playPointTone(isFancy)
+	if isFancy then
+		local song = love.audio.newSource("assets/sfx/fancy_point.mp3", "static")
+		song:setVolume(DEFAULT_MUSIC_VOLUME)
+		song:play()
+	else
+		local song = love.audio.newSource("assets/sfx/standard_point.mp3", "static")
+		song:setVolume(DEFAULT_MUSIC_VOLUME / 2)
+		song:play()
+	end
+end
+
 -- Play celebratory high-score jingle, stopping all background loops first
 function SoundManager:playHighScoreJingle()
 	-- Stop any current SFX
