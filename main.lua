@@ -37,6 +37,10 @@ local CONFIG              = {
     health_text_offset_x = 40, -- Pixels from right edge when drawing health text
 }
 
+-- Hit-pause (slow-mo) constants -----------------------------------------------------------
+local HIT_PAUSE_DURATION  = 0.20 -- seconds of slow motion on heavy hits (extended)
+local SLOWMO_SCALE        = 0.04 -- fraction of normal speed during hit-pause (very slow)
+
 local globalGameState     = {
     highScore = 0
 }
@@ -54,12 +58,18 @@ local game                = {
     customMapDrawer = nil,
     activeEffects = {},
     bulletShootTimer = 0,
+    -- Hit-pause state
+    hitPauseTimer = 0,
+    timeScale = 1,
     -- Canvas settings for scaled rendering
     canvas = nil,
     -- Game state management
     state = CONFIG.skip_start_menu and "playing" or "start", -- "start", "playing", "paused", "gameOver"
     score = 0,
 }
+
+-- Forward declaration for hit-pause helper so functions above its definition can call it
+local trigger_hit_pause
 
 -- Helper so Bullet can query camera X without circular require
 _G.CONFIG                 = CONFIG
@@ -220,6 +230,7 @@ local function handle_collisions(dt)
                 if not game.player.invincible then
                     game.player:takeDamage(1)
                     game.soundManager:playCollisionTone()
+                    trigger_hit_pause()
                 end
             end
         end
@@ -249,6 +260,12 @@ local function transition_to_gameOver_if_needed(forceTransition)
     end
 end
 
+-- Trigger a brief hit-pause (called on big impacts)
+function trigger_hit_pause()
+    game.hitPauseTimer = HIT_PAUSE_DURATION
+    game.timeScale = SLOWMO_SCALE
+end
+
 -- Main game loop
 function love.load()
     init_window()
@@ -263,8 +280,23 @@ end
 function love.update(dt)
     -- Only update game when playing
     if game.state == "playing" then
+        -- Handle hit-pause timer & compute scaled dt
+        if game.hitPauseTimer > 0 then
+            game.hitPauseTimer = game.hitPauseTimer - dt
+            if game.hitPauseTimer <= 0 then
+                game.hitPauseTimer = 0
+                game.timeScale = 1
+            else
+                -- Smoothly interpolate from slow to normal speed
+                local progress = 1 - (game.hitPauseTimer / HIT_PAUSE_DURATION) -- 0 → 1
+                game.timeScale = SLOWMO_SCALE + (1 - SLOWMO_SCALE) * progress
+            end
+        end
+
+        local scaled_dt = dt * game.timeScale
+
         -- Update camera (constant scrolling) and get wrap information
-        local wrapped, wrap_offset = game.camera:update(dt, map)
+        local wrapped, wrap_offset = game.camera:update(scaled_dt, map)
 
         -- If camera wrapped, shift all entities so they stay in the same logical place
         if wrapped and wrap_offset > 0 then
@@ -277,25 +309,25 @@ function love.update(dt)
         end
 
         -- Update world
-        map:update(dt)
+        map:update(scaled_dt)
 
         -- Update enemy spawning (pass current camera position so spawns are in world coords)
         local cam_x, _ = game.camera:get_position()
-        game.enemySpawner:update(dt, game.entities, cam_x)
+        game.enemySpawner:update(scaled_dt, game.entities, cam_x)
         -- Update collectible spawning
-        game.collectibleSpawner:update(dt, game.entities, cam_x, map)
+        game.collectibleSpawner:update(scaled_dt, game.entities, cam_x, map)
 
-        update_entities(dt)
+        update_entities(scaled_dt)
 
         -- Update floating combat text
         if game.floatingTextManager then
-            game.floatingTextManager:update(dt)
+            game.floatingTextManager:update(scaled_dt)
         end
 
         -- Auto-shoot bullets while gun power is active
         if game.player.has_gun then
             local shootInterval = 0.25
-            game.bulletShootTimer = game.bulletShootTimer + dt
+            game.bulletShootTimer = game.bulletShootTimer + scaled_dt
             if game.bulletShootTimer >= shootInterval then
                 game.bulletShootTimer = game.bulletShootTimer - shootInterval
 
@@ -311,7 +343,7 @@ function love.update(dt)
         -- Tick active timed effects (power-ups etc.)
         for i = #game.activeEffects, 1, -1 do
             local eff = game.activeEffects[i]
-            eff.remaining = eff.remaining - dt
+            eff.remaining = eff.remaining - scaled_dt
             if eff.remaining <= 0 then
                 if eff.type == "slow_enemies" then
                     local mul = eff.multiplier or 0.5
@@ -331,7 +363,7 @@ function love.update(dt)
             end
         end
 
-        handle_collisions(dt)
+        handle_collisions(scaled_dt)
 
         -- If player moves off-screen, inflict damage (once) and respawn near center of current view.
         do
@@ -405,7 +437,7 @@ function love.draw()
         reflection_shader:send("displacement", displacementTex)
         reflection_shader:send("resolution", { love.graphics.getWidth(), love.graphics.getHeight() })
 
-        
+
 
 
 
@@ -451,6 +483,16 @@ function love.draw()
         -- Draw floating combat text (world space, inside camera transform)
         if game.floatingTextManager then
             game.floatingTextManager:draw()
+        end
+
+        -- Draw hit-pause ring effect around player
+        if game.hitPauseTimer > 0 then
+            local hp_alpha = game.hitPauseTimer / HIT_PAUSE_DURATION
+            local radius = 6 + (1 - hp_alpha) * 26
+            love.graphics.setColor(1, 1, 1, hp_alpha * 0.8) -- white
+            love.graphics.setLineWidth(2)
+            love.graphics.circle("line", game.player.x, game.player.y - game.player.height / 2, radius)
+            love.graphics.setColor(1, 1, 1, 1)
         end
         love.graphics.pop()
 
