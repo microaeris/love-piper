@@ -28,7 +28,7 @@ function utils.is_walkable(map, x, y, layer_index)
     local tile_x = (math.floor(x / map.tilewidth) % (num_tiles_x)) + 1
     local tile_y = math.floor(y / map.tileheight)
     local tile = layer.data[tile_y] and layer.data[tile_y][tile_x]
-    return tile and tile.id ~= 0 -- or tile.gid ~= 0, depending on your map
+    return tile == nil or tile.id == 0 -- or tile.gid ~= 0, depending on your map
 end
 
 -- This should be the same as is_walkable, but idk
@@ -38,7 +38,7 @@ function utils.is_spawnable(map, x, y, layer_index)
     local tile_x = (math.floor(x / map.tilewidth) % (num_tiles_x)) + 1
     local tile_y = math.floor(y / map.tileheight) + 1 -- Difference is here.
     local tile = layer.data[tile_y] and layer.data[tile_y][tile_x]
-    return tile and tile.id ~= 0                      -- or tile.gid ~= 0, depending on your map
+    return tile == nil or tile.id == 0                      -- or tile.gid ~= 0, depending on your map
 end
 
 -- Color utilities
